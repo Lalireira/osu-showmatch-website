@@ -5,8 +5,9 @@ const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
 
 interface TokenResponse {
-  access_token: string;
+  token_type: string;
   expires_in: number;
+  access_token: string;
 }
 
 let accessToken: string | null = null;
@@ -25,44 +26,46 @@ async function getAccessToken(): Promise<string> {
       scope: 'public',
     });
 
-    if (!response.data.access_token) {
-      throw new Error('No access token received');
-    }
-
-    const newToken = response.data.access_token;
-    accessToken = newToken;
+    accessToken = response.data.access_token;
     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
-    return newToken;
+    return accessToken;
   } catch (error: any) {
     console.error('Error getting access token:', error.response?.data || error.message);
-    throw error;
+    throw new Error('Failed to get access token');
   }
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const username = searchParams.get('username');
-
-  if (!username) {
-    return NextResponse.json({ error: 'Username is required' }, { status: 400 });
-  }
-
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ userId: string }> }
+) {
+  const { userId } = await context.params;
+  
   try {
     const token = await getAccessToken();
-    const response = await axios.get(`https://osu.ppy.sh/api/v2/users/${username}`, {
+
+    const response = await axios.get(`https://osu.ppy.sh/api/v2/users/${userId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      params: {
-        mode: 'osu',
+        'Authorization': `Bearer ${token}`,
       },
     });
 
-    return NextResponse.json(response.data);
+    const userData = response.data;
+    return NextResponse.json({
+      username: userData.username,
+      avatar_url: userData.avatar_url,
+      country_code: userData.country_code,
+      statistics: {
+        pp: userData.statistics?.pp ?? 0,
+        accuracy: userData.statistics?.hit_accuracy ?? 0,
+        global_rank: userData.statistics?.global_rank ?? 0,
+        country_rank: userData.statistics?.country_rank ?? 0,
+      },
+    });
   } catch (error: any) {
     console.error('Error fetching user data:', error.response?.data || error.message);
     return NextResponse.json(
-      { error: error.response?.data?.error || error.message },
+      { error: 'Failed to fetch user data' },
       { status: error.response?.status || 500 }
     );
   }

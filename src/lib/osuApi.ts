@@ -12,37 +12,47 @@ interface TokenResponse {
 let accessToken: string | null = null;
 let tokenExpiry: number | null = null;
 
-async function getAccessToken() {
+async function getAccessToken(): Promise<string> {
+  console.log('Getting access token...');
+  console.log('Client ID:', clientId);
+  console.log('Client Secret:', clientSecret ? '***' : 'undefined');
+
   if (accessToken && tokenExpiry && Date.now() < tokenExpiry) {
+    console.log('Using cached token');
     return accessToken;
   }
 
   try {
-    const response = await axios.post('https://osu.ppy.sh/oauth/token', {
+    console.log('Requesting new token...');
+    const response = await axios.post<TokenResponse>('https://osu.ppy.sh/oauth/token', {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: 'client_credentials',
       scope: 'public',
     });
 
+    console.log('Token response received');
     accessToken = response.data.access_token;
     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
     return accessToken;
-  } catch (error) {
-    console.error('Error getting access token:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error getting access token:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw new Error(`Failed to get access token: ${error.response?.data?.error || error.message}`);
   }
 }
 
 export async function getUserData(userId: number) {
   try {
-    const token = await getAccessToken();
-    const response = await axios.get(`https://osu.ppy.sh/api/v2/users/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
+    const response = await fetch(`/api/osu/user/${userId}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch user data');
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching user data:', error);
     throw error;

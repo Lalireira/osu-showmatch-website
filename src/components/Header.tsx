@@ -15,7 +15,7 @@ export default function Header() {
               </Link>
             </li>
             <li>
-              <Link href="/tournament-teams" className="hover:text-[#ff66aa] transition-colors">
+              <Link href="/teams" className="hover:text-[#ff66aa] transition-colors">
                 Teams
               </Link>
             </li>

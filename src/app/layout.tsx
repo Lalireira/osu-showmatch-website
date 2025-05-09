@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Figtree } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
-const figtree = Figtree({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "osu! Showmatch",
@@ -13,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      <body className={`${figtree.className} min-h-screen flex flex-col bg-[#1a1a1a] text-white`}>
+      <body className="bg-[#0a0a0a] text-white min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow">
           {children}

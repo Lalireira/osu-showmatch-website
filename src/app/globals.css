@@ -1,14 +1,61 @@
 @import "tailwindcss";
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Sansation';
+  src: url('/fonts/Sansation_Regular.woff2') format('woff2'),
+       url('/fonts/Sansation_Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sansation';
+  src: url('/fonts/Sansation_Bold.woff2') format('woff2'),
+       url('/fonts/Sansation_Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Torus';
+  src: url('/fonts/torus/Torus-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Torus';
+  src: url('/fonts/torus/Torus-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Torus';
+  src: url('/fonts/torus/Torus-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 10;
+  --background-end-rgb: 10, 10, 10;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: 'Torus', Arial, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
@@ -20,7 +67,22 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  font-family: 'Torus', Arial, sans-serif;
+  font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Torus', Arial, sans-serif;
+  font-weight: 700;
+}
+
+.performance, .accuracy {
+  font-family: 'Torus', Arial, sans-serif;
+  font-weight: 400;
 }
