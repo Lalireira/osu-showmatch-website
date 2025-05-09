@@ -12,6 +12,10 @@ interface TokenResponse {
 let accessToken: string | null = null;
 let tokenExpiry: number | null = null;
 
+// キャッシュの設定
+const CACHE_DURATION = 5 * 60 * 1000; // 5分
+const userDataCache = new Map<string, { data: any; timestamp: number }>();
+
 async function getAccessToken(): Promise<string> {
   console.log('Getting access token...');
   console.log('Client ID:', clientId);
@@ -46,13 +50,29 @@ async function getAccessToken(): Promise<string> {
 }
 
 export async function getUserData(userId: number) {
+  const cacheKey = `user_${userId}`;
+  const cachedData = userDataCache.get(cacheKey);
+
+  // キャッシュが有効な場合はキャッシュされたデータを返す
+  if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+    return cachedData.data;
+  }
+
   try {
     const response = await fetch(`/api/osu/user/${userId}`);
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to fetch user data');
     }
-    return await response.json();
+    const data = await response.json();
+    
+    // データをキャッシュに保存
+    userDataCache.set(cacheKey, {
+      data,
+      timestamp: Date.now()
+    });
+
+    return data;
   } catch (error) {
     console.error('Error fetching user data:', error);
     throw error;

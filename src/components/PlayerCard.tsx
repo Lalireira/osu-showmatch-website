@@ -5,52 +5,54 @@ import { getUserData } from '@/lib/osuApi';
 interface PlayerCardProps {
   userId: number;
   username: string;
+  index?: number;
 }
 
 interface UserData {
   username: string;
   avatar_url: string;
-  country_code: string;
   statistics?: {
     pp: number;
     accuracy: number;
     global_rank: number;
     country_rank: number;
+    play_count: number;
   } | null;
+  comment: string;
 }
 
-export default function PlayerCard({ userId, username }: PlayerCardProps) {
+export default function PlayerCard({ userId, username, index = 0 }: PlayerCardProps) {
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchUserData() {
+    const fetchUserData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const data = await getUserData(userId);
+        const response = await fetch(`/api/osu/user/${userId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch user data: ${response.statusText}`);
+        }
+        const data = await response.json();
+        console.log('API Response:', data);
         setUserData(data);
-      } catch (err: any) {
-        console.error('Error details:', err.response?.data || err.message);
-        setError(err.response?.data?.error || 'Failed to load player data');
+      } catch (err) {
+        console.error('Error fetching user data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch user data');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
-    }
+    };
 
     fetchUserData();
   }, [userId]);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="bg-[#2a2a2a] p-3 rounded-lg animate-pulse">
-        <div className="flex items-start gap-3">
-          <div className="w-16 aspect-square bg-gray-700 rounded-lg"></div>
-          <div className="flex-grow space-y-2">
-            <div className="h-5 bg-gray-700 rounded w-24"></div>
-            <div className="h-4 bg-gray-700 rounded w-16"></div>
-          </div>
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg animate-fade-in-down" style={{ animationDelay: `${index * 0.1}s` }}>
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-700 rounded w-1/2"></div>
         </div>
       </div>
     );
@@ -58,7 +60,7 @@ export default function PlayerCard({ userId, username }: PlayerCardProps) {
 
   if (error || !userData) {
     return (
-      <div className="bg-[#2a2a2a] p-3 rounded-lg">
+      <div className="bg-gray-800 rounded-lg p-4 shadow-lg animate-fade-in-down" style={{ animationDelay: `${index * 0.1}s` }}>
         <div className="flex items-start gap-3">
           <div className="w-16 aspect-square bg-gray-700 rounded-lg"></div>
           <div className="flex-grow">
@@ -80,53 +82,58 @@ export default function PlayerCard({ userId, username }: PlayerCardProps) {
     return acc.toFixed(2) + '%';
   };
 
+  const formatPlayCount = (count: number | undefined | null) => {
+    if (count === undefined || count === null) return 'N/A';
+    return count.toLocaleString();
+  };
+
   return (
-    <div className="bg-[#2a2a2a] p-3 rounded-lg relative overflow-hidden">
-      {/* Background Avatar */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <Image
-          src={userData.avatar_url}
-          alt=""
-          fill
-          className="object-cover"
-        />
-      </div>
-      
-      <div className="relative z-10">
-        <div className="flex justify-between items-start">
-          {/* Username and Country */}
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold truncate">{userData.username}</h3>
-            <span className="text-sm text-gray-400">[{userData.country_code}]</span>
-          </div>
-          
-          {/* Global Rank and Country Rank */}
-          <div className="flex flex-col items-end">
-            <span className="text-xl font-bold">#{formatNumber(userData.statistics?.global_rank)}</span>
-            <span className="text-sm text-gray-400">({userData.country_code} #{formatNumber(userData.statistics?.country_rank)})</span>
-          </div>
-        </div>
-
-        {/* PP and Accuracy */}
-        <div className="flex flex-col gap-1 text-sm text-gray-400 mt-2">
-          <div className="flex items-center gap-1">
-            <span className="text-gray-500">Performance</span>
-            <span className="performance">{formatNumber(userData.statistics?.pp)}pp</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-gray-500">Accuracy</span>
-            <span className="accuracy">{formatAccuracy(userData.statistics?.accuracy)}</span>
-          </div>
-        </div>
-
-        {/* Player Avatar */}
-        <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full overflow-hidden border-2 border-gray-700">
+    <div className="bg-[#2a2a2a] rounded-xl p-4 hover:transform hover:scale-105 transition-transform duration-300 cursor-pointer animate-fade-in-down" style={{ animationDelay: `${index * 0.1}s` }}>
+      <div className="flex items-start gap-4">
+        {/* Left side: Avatar */}
+        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-700 flex-shrink-0">
           <Image
             src={userData.avatar_url}
             alt={`${userData.username}'s avatar`}
-            fill
+            width={48}
+            height={48}
             className="object-cover"
           />
+        </div>
+
+        {/* Center: Username, Stats and Comment */}
+        <div className="flex-grow min-w-0 max-w-[400px]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold">{userData.username}</h2>
+          </div>
+          <div className="flex gap-6 mt-2">
+            <div>
+              <span className="text-xs text-gray-500">Performance</span>
+              <p className="text-sm text-gray-400">{formatNumber(userData.statistics?.pp)}pp</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">Accuracy</span>
+              <p className="text-sm text-gray-400">{formatAccuracy(userData.statistics?.accuracy)}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">Playcount</span>
+              <p className="text-sm text-gray-400">{formatPlayCount(userData.statistics?.play_count)}</p>
+            </div>
+          </div>
+          {userData.comment && (
+            <div className="flex items-center gap-1 mt-2">
+              <i className="fas fa-comment text-gray-500 text-xs"></i>
+              <span className="text-sm text-gray-400 truncate">{userData.comment}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right side: Rank */}
+        <div className="flex flex-col justify-end border-l border-gray-700 pl-6 flex-shrink-0">
+          <div className="text-right">
+            <p className="font-bold text-[#ff66aa]">#{formatNumber(userData.statistics?.global_rank)}</p>
+            <p className="text-sm text-gray-400">#{formatNumber(userData.statistics?.country_rank)}</p>
+          </div>
         </div>
       </div>
     </div>

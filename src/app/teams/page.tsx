@@ -74,6 +74,7 @@ export default function TeamsPage() {
                   key={playerIndex}
                   userId={player.id}
                   username={player.username}
+                  index={playerIndex}
                 />
               ))}
             </div>
