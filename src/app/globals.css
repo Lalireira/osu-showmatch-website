@@ -5,24 +5,6 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Sansation';
-  src: url('/fonts/Sansation_Regular.woff2') format('woff2'),
-       url('/fonts/Sansation_Regular.woff') format('woff');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Sansation';
-  src: url('/fonts/Sansation_Bold.woff2') format('woff2'),
-       url('/fonts/Sansation_Bold.woff') format('woff');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
   font-family: 'Torus';
   src: url('/fonts/torus/Torus-Light.otf') format('opentype');
   font-weight: 300;
