@@ -88,8 +88,18 @@ export default function PlayerCard({ userId, username, index = 0 }: PlayerCardPr
   };
 
   return (
-    <div className="bg-[#2a2a2a] rounded-xl p-4 hover:transform hover:scale-105 transition-transform duration-300 cursor-pointer animate-fade-in-down" style={{ animationDelay: `${index * 0.1}s` }}>
-      <div className="flex items-start gap-4">
+    <div className="bg-[#2a2a2a] rounded-xl p-4 hover:transform hover:scale-105 transition-transform duration-300 cursor-pointer animate-fade-in-down relative overflow-hidden" style={{ animationDelay: `${index * 0.1}s` }}>
+      {/* Background Avatar */}
+      <div className="absolute inset-0 opacity-5">
+        <Image
+          src={userData.avatar_url}
+          alt=""
+          fill
+          className="object-cover"
+        />
+      </div>
+      
+      <div className="flex items-start gap-4 relative">
         {/* Left side: Avatar */}
         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-700 flex-shrink-0">
           <Image
