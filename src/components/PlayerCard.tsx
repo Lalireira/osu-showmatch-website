@@ -21,6 +21,46 @@ interface UserData {
   comment: string;
 }
 
+// キャッシュの型定義
+interface UserCacheData {
+  data: UserData;
+  timestamp: number;
+}
+
+// キャッシュの有効期限（24時間）
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
+// キャッシュからデータを取得する関数
+function getFromCache(userId: number): UserData | null {
+  if (typeof window === 'undefined') return null;
+  
+  const cached = localStorage.getItem(`user_${userId}`);
+  if (!cached) return null;
+
+  const { data, timestamp }: UserCacheData = JSON.parse(cached);
+  const now = Date.now();
+
+  // キャッシュが有効期限内かチェック
+  if (now - timestamp < CACHE_DURATION) {
+    return data;
+  }
+
+  // 期限切れの場合はキャッシュを削除
+  localStorage.removeItem(`user_${userId}`);
+  return null;
+}
+
+// データをキャッシュに保存する関数
+function saveToCache(userId: number, data: UserData): void {
+  if (typeof window === 'undefined') return;
+
+  const cacheData: UserCacheData = {
+    data,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(`user_${userId}`, JSON.stringify(cacheData));
+}
+
 export default function PlayerCard({ userId, username, index = 0 }: PlayerCardProps) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,12 +69,24 @@ export default function PlayerCard({ userId, username, index = 0 }: PlayerCardPr
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        // キャッシュからデータを取得
+        const cachedData = getFromCache(userId);
+        if (cachedData) {
+          setUserData(cachedData);
+          setIsLoading(false);
+          return;
+        }
+
+        // キャッシュになければAPIから取得
         const response = await fetch(`/api/osu/user/${userId}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch user data: ${response.statusText}`);
         }
         const data = await response.json();
         console.log('API Response:', data);
+        
+        // 取得したデータをキャッシュに保存
+        saveToCache(userId, data);
         setUserData(data);
       } catch (err) {
         console.error('Error fetching user data:', err);

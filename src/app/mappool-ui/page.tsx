@@ -26,6 +26,46 @@ interface Beatmap {
   };
 }
 
+// キャッシュの型定義
+interface CacheData {
+  data: Beatmap;
+  timestamp: number;
+}
+
+// キャッシュの有効期限（24時間）
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
+// キャッシュからデータを取得する関数
+function getFromCache(beatmapId: string): Beatmap | null {
+  if (typeof window === 'undefined') return null;
+  
+  const cached = localStorage.getItem(`beatmap_${beatmapId}`);
+  if (!cached) return null;
+
+  const { data, timestamp }: CacheData = JSON.parse(cached);
+  const now = Date.now();
+
+  // キャッシュが有効期限内かチェック
+  if (now - timestamp < CACHE_DURATION) {
+    return data;
+  }
+
+  // 期限切れの場合はキャッシュを削除
+  localStorage.removeItem(`beatmap_${beatmapId}`);
+  return null;
+}
+
+// データをキャッシュに保存する関数
+function saveToCache(beatmapId: string, data: Beatmap): void {
+  if (typeof window === 'undefined') return;
+
+  const cacheData: CacheData = {
+    data,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(`beatmap_${beatmapId}`, JSON.stringify(cacheData));
+}
+
 // URLからbeatmapset_idとbeatmap_idを抽出する関数
 function extractIdsFromUrl(url: string): { beatmapset_id: number; beatmap_id: number } {
   const match = url.match(/beatmapsets\/(\d+)#osu\/(\d+)/);
@@ -42,9 +82,16 @@ function extractIdsFromUrl(url: string): { beatmapset_id: number; beatmap_id: nu
 function groupByCategory() {
   const groups: Record<string, typeof mappoolConfig> = {};
   for (const map of mappoolConfig) {
+    // カテゴリ名を抽出（数字を除去）
     const category = map.mapNo.replace(/\d+$/, '');
-    if (!groups[category]) groups[category] = [];
-    groups[category].push(map);
+    // TBの場合は特別処理
+    if (map.mapNo === 'TB') {
+      if (!groups['TB']) groups['TB'] = [];
+      groups['TB'].push(map);
+    } else {
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(map);
+    }
   }
   return groups;
 }
@@ -59,7 +106,19 @@ export default function MappoolTable() {
       for (const map of mappoolConfig) {
         try {
           const { beatmap_id } = extractIdsFromUrl(map.url);
-          const data = await getBeatmapData(beatmap_id.toString());
+          const beatmapId = beatmap_id.toString();
+
+          // キャッシュからデータを取得
+          const cachedData = getFromCache(beatmapId);
+          if (cachedData) {
+            results.push(cachedData);
+            continue;
+          }
+
+          // キャッシュになければAPIから取得
+          const data = await getBeatmapData(beatmapId);
+          // 取得したデータをキャッシュに保存
+          saveToCache(beatmapId, data);
           results.push(data);
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
