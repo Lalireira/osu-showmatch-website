@@ -1,21 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import PlayerCard from '@/components/PlayerCard';
 import { teams, Team, Player } from '@/data/teams';
 import { getUserData } from '@/lib/osuApi';
+import PlayerCard from '@/components/PlayerCard';
+import { formatNumber } from '../lib/utils';
 
-interface PlayerWithStats extends Player {
+interface PlayerWithStats extends Omit<Player, 'statistics'> {
   statistics?: {
     pp: number;
     accuracy: number;
     global_rank: number;
     country_rank: number;
+    play_count?: number;
   };
+  avatar_url?: string;
 }
 
-interface TeamWithStats {
-  name: string;
+interface TeamWithStats extends Omit<Team, 'players'> {
   players: PlayerWithStats[];
 }
 
@@ -23,47 +25,42 @@ export default function TeamsPage() {
   const [teamsWithStats, setTeamsWithStats] = useState<TeamWithStats[]>(teams);
 
   useEffect(() => {
-    async function fetchAndSortPlayers() {
-      const teamsWithStats = await Promise.all(
+    const fetchPlayerStats = async () => {
+      const updatedTeams = await Promise.all(
         teams.map(async (team) => {
           const playersWithStats = await Promise.all(
             team.players.map(async (player) => {
               try {
-                const data = await getUserData(player.id);
+                const userData = await getUserData(player.id);
                 return {
                   ...player,
-                  statistics: data.statistics,
+                  statistics: userData.statistics,
+                  avatar_url: userData.avatar_url
                 };
               } catch (error) {
-                console.error(`Error fetching data for ${player.username}:`, error);
+                console.error(`Error fetching data for player ${player.username}:`, error);
                 return player;
               }
             })
           );
-
-          // Sort players by global rank (lower rank = better)
-          const sortedPlayers = [...playersWithStats].sort((a, b) => {
-            const rankA = a.statistics?.global_rank ?? Infinity;
-            const rankB = b.statistics?.global_rank ?? Infinity;
+          // Sort players by global rank
+          const sortedPlayers = playersWithStats.sort((a, b) => {
+            const rankA = a.statistics?.global_rank || Infinity;
+            const rankB = b.statistics?.global_rank || Infinity;
             return rankA - rankB;
           });
-
-          return {
-            ...team,
-            players: sortedPlayers,
-          };
+          return { ...team, players: sortedPlayers };
         })
       );
+      setTeamsWithStats(updatedTeams);
+    };
 
-      setTeamsWithStats(teamsWithStats);
-    }
-
-    fetchAndSortPlayers();
+    fetchPlayerStats();
   }, []);
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">Teams</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center animate-fade-in">Teams</h1>
       <div className="space-y-12">
         {teamsWithStats.map((team, teamIndex) => (
           <div key={teamIndex} className="space-y-4">
@@ -71,7 +68,7 @@ export default function TeamsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {team.players.map((player, playerIndex) => (
                 <PlayerCard
-                  key={playerIndex}
+                  key={player.id}
                   userId={player.id}
                   username={player.username}
                   index={playerIndex}
