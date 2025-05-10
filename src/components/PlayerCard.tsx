@@ -141,7 +141,7 @@ export default function PlayerCard({ userId, username, index = 0 }: PlayerCardPr
         {/* Right side: Rank */}
         <div className="flex flex-col justify-end border-l border-gray-700 pl-6 flex-shrink-0">
           <div className="text-right">
-            <p className="font-bold text-[#ff66aa]">#{formatNumber(userData.statistics?.global_rank)}</p>
+            <p className="font-bold text-[#79b0ea]">#{formatNumber(userData.statistics?.global_rank)}</p>
             <p className="text-sm text-gray-400">#{formatNumber(userData.statistics?.country_rank)}</p>
           </div>
         </div>

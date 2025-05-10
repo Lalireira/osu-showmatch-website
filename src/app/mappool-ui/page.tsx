@@ -9,35 +9,46 @@ export default function MappoolPage() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">Mappool</h1>
+    <main className="min-h-screen bg-[#050813]">
+      <div className="container mx-auto px-4 py-8">
+        <h1 
+          className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down"
+          style={{ animationDelay: '0s' }}
+        >
+          Mappool
+        </h1>
 
-      {categories.map((category) => (
-        <section key={category.name} className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">{category.name} ({category.count}譜面)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: category.count }).map((_, i) => (
-              <div key={i} className="bg-[#2a2a2a] p-6 rounded-lg">
-                <div className="aspect-video bg-gray-700 rounded-lg mb-4"></div>
-                <h3 className="text-xl font-semibold mb-2">Song Title {i + 1}</h3>
-                <div className="space-y-2 text-gray-400">
-                  <p>Artist: TBA</p>
-                  <p>Difficulty: TBA</p>
-                  <p>Mapper: TBA</p>
-                  <div className="grid grid-cols-2 gap-2 mt-4">
-                    <p>Length: TBA</p>
-                    <p>BPM: TBA</p>
-                    <p>SR: TBA</p>
-                    <p>CS: TBA</p>
-                    <p>AR: TBA</p>
-                    <p>OD: TBA</p>
+        {categories.map((category, index) => (
+          <section 
+            key={category.name} 
+            className="mb-12 animate-fade-in-down"
+            style={{ animationDelay: `${(index + 1) * 0.3}s` }}
+          >
+            <h2 className="text-3xl font-bold mb-6 text-white">{category.name} ({category.count} maps)</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: category.count }).map((_, i) => (
+                <div key={i} className="bg-[#2a2a2a] p-6 rounded-lg">
+                  <div className="aspect-video bg-gray-700 rounded-lg mb-4"></div>
+                  <h3 className="text-xl font-semibold mb-2 text-white">Song Title {i + 1}</h3>
+                  <div className="space-y-2 text-gray-300">
+                    <p>Artist: TBA</p>
+                    <p>Difficulty: TBA</p>
+                    <p>Mapper: TBA</p>
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      <p>Length: TBA</p>
+                      <p>BPM: TBA</p>
+                      <p>SR: TBA</p>
+                      <p>CS: TBA</p>
+                      <p>AR: TBA</p>
+                      <p>OD: TBA</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </main>
   );
 } 
