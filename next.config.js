@@ -21,6 +21,11 @@ const nextConfig = {
         hostname: 'osu.ppy.sh',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.ppy.sh',
+        pathname: '/**',
+      },
     ],
   },
   // 開発環境でのキャッシュを無効化

@@ -81,10 +81,16 @@ export async function getUserData(userId: number) {
 
 export async function getBeatmapData(beatmapId: string) {
   try {
-    const response = await axios.get(`/api/osu/beatmap?beatmapId=${encodeURIComponent(beatmapId)}`);
-    return response.data;
+    const response = await fetch(`/api/osu/beatmap?beatmapId=${encodeURIComponent(beatmapId)}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch beatmap data');
+    }
+    return await response.json();
   } catch (error) {
     console.error('Error fetching beatmap data:', error);
     throw error;
   }
-} 
+}
+
+export { getAccessToken }; 
