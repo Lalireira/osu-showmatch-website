@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { teams, Team, Player } from '@/data/teams';
+import { teams } from '@/data/teams';
 import { getUserData } from '@/lib/osuApi';
 import PlayerCard from '@/components/PlayerCard';
-import { formatNumber } from '../lib/utils';
 import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
+import { extractUserIdFromUrl } from '@/lib/utils';
 
-interface PlayerWithStats extends Omit<Player, 'statistics'> {
+interface PlayerWithStats {
+  id: number;
+  username: string;
   statistics?: {
     pp: number;
     accuracy: number;
@@ -18,84 +20,62 @@ interface PlayerWithStats extends Omit<Player, 'statistics'> {
   avatar_url?: string;
 }
 
-interface TeamWithStats extends Omit<Team, 'players'> {
-  players: PlayerWithStats[];
-}
-
 export default function TeamsPage() {
-  const [teamsWithStats, setTeamsWithStats] = useState<TeamWithStats[]>(teams);
+  const [playersData, setPlayersData] = useState<Record<number, PlayerWithStats | null>>({});
 
   useEffect(() => {
-    const fetchPlayerStats = async () => {
-      const updatedTeams = await Promise.all(
-        teams.map(async (team) => {
-          const playersWithStats = await Promise.all(
-            team.players.map(async (player) => {
-              try {
-                // キャッシュからデータを取得
-                const cachedData = getFromLocalStorage<PlayerWithStats>(`player_${player.id}`, CACHE_VERSIONS.PLAYER);
-                if (cachedData) {
-                  return cachedData;
-                }
-
-                // キャッシュになければAPIから取得
-                const userData = await getUserData(player.id);
-                const playerData = {
-                  ...player,
-                  statistics: userData.statistics,
-                  avatar_url: userData.avatar_url
-                };
-                
-                // 取得したデータをキャッシュに保存
-                saveToLocalStorage(`player_${player.id}`, playerData, CACHE_VERSIONS.PLAYER);
-                return playerData;
-              } catch (error) {
-                console.error(`Error fetching data for player ${player.username}:`, error);
-                return player;
-              }
-            })
-          );
-          // Sort players by global rank
-          const sortedPlayers = playersWithStats.sort((a, b) => {
-            const rankA = a.statistics?.global_rank || Infinity;
-            const rankB = b.statistics?.global_rank || Infinity;
-            return rankA - rankB;
-          });
-          return { ...team, players: sortedPlayers };
-        })
-      );
-      setTeamsWithStats(updatedTeams);
-    };
-
-    fetchPlayerStats();
+    async function fetchAllPlayers() {
+      const allIds = teams.flatMap(team => team.members.map(member => extractUserIdFromUrl(member.url)));
+      const newPlayersData: Record<number, PlayerWithStats | null> = {};
+      for (const id of allIds) {
+        try {
+          // キャッシュ優先
+          const cached = getFromLocalStorage<PlayerWithStats>(`user_${id}`, CACHE_VERSIONS.PLAYER);
+          if (cached) {
+            newPlayersData[id] = cached;
+            continue;
+          }
+          const data = await getUserData(id);
+          newPlayersData[id] = data;
+          saveToLocalStorage(`user_${id}`, data, CACHE_VERSIONS.PLAYER);
+        } catch {
+          newPlayersData[id] = null;
+        }
+      }
+      setPlayersData(newPlayersData);
+    }
+    fetchAllPlayers();
   }, []);
 
   return (
     <main className="min-h-screen bg-[#050813]">
-      <div className="container mx-auto px-4 py-8">
-        <h1 
-          className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down"
-          style={{ animationDelay: '0s' }}
-        >
-          Teams
-        </h1>
-        <div className="space-y-12">
-          {teamsWithStats.map((team, teamIndex) => (
-            <div 
-              key={teamIndex} 
-              className="space-y-4 animate-fade-in-down"
-              style={{ animationDelay: `${(teamIndex + 1) * 0.3}s` }}
-            >
-              <h2 className="text-2xl font-bold mb-4 text-white">{team.name}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {team.players.map((player, playerIndex) => (
-                  <PlayerCard
-                    key={player.id}
-                    userId={player.id}
-                    username={player.username}
-                    index={playerIndex}
-                  />
-                ))}
+      <div className="container mx-auto px-2 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">Teams</h1>
+        <div className="space-y-8">
+          {teams.map((team, idx) => (
+            <div key={team.team} className="bg-[#181c24] rounded-lg shadow p-6 animate-fade-in-down">
+              <h2 className="text-2xl font-bold mb-4 text-white">{team.team}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {team.members
+                  .slice()
+                  .sort((a, b) => {
+                    const idA = extractUserIdFromUrl(a.url);
+                    const idB = extractUserIdFromUrl(b.url);
+                    const rankA = playersData[idA]?.statistics?.global_rank ?? Infinity;
+                    const rankB = playersData[idB]?.statistics?.global_rank ?? Infinity;
+                    return rankA - rankB;
+                  })
+                  .map(member => {
+                    const userId = extractUserIdFromUrl(member.url);
+                    const player = playersData[userId];
+                    return (
+                      <PlayerCard
+                        key={member.userNo}
+                        userId={userId}
+                        username={player?.username || 'Loading...'}
+                      />
+                    );
+                  })}
               </div>
             </div>
           ))}

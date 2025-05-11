@@ -5,6 +5,7 @@ import { mappoolConfig } from '@/data/mappool';
 import { getBeatmapData } from '@/lib/osuApi';
 import { useEffect, useState } from 'react';
 import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
+import { extractIdsFromUrl } from '@/lib/utils';
 
 interface Beatmap {
   id: number;
@@ -24,18 +25,6 @@ interface Beatmap {
     artist: string;
     title: string;
     creator: string;
-  };
-}
-
-// URLからbeatmapset_idとbeatmap_idを抽出する関数
-function extractIdsFromUrl(url: string): { beatmapset_id: number; beatmap_id: number } {
-  const match = url.match(/beatmapsets\/(\d+)#osu\/(\d+)/);
-  if (!match) {
-    throw new Error(`Invalid beatmap URL format: ${url}`);
-  }
-  return {
-    beatmapset_id: parseInt(match[1], 10),
-    beatmap_id: parseInt(match[2], 10)
   };
 }
 

@@ -1,40 +1,60 @@
-export interface Player {
-  id: number;
-  username: string;
-  statistics?: {
-    pp: number;
-    accuracy: number;
-    global_rank: number;
-    country_rank: number;
-  };
-}
-
-export interface Team {
-  name: string;
-  players: Player[];
-}
-
-export const teams: Team[] = [
+export const teams = [
   {
-    name: 'Team A',
-    players: [
-      { id: 1184175, username: 'Reira' },
-      { id: 4733185, username: 'KonKonKinakoN' },
-      { id: 4355380, username: 'Nobuchi-' },
-      { id: 21911882, username: 'Tsubaban' },
-      { id: 7096642, username: 'WiggleCalt' },
-      { id: 13011078, username: '-K4rimw-' },
-    ],
+    "team": "TeamA",
+    "members": [
+      {
+        "userNo": "TeamA1",
+        "url": "https://osu.ppy.sh/users/1184175"
+      },
+      {
+        "userNo": "TeamA2",
+        "url": "https://osu.ppy.sh/users/10878651"
+      },
+      {
+        "userNo": "TeamA3",
+        "url": "https://osu.ppy.sh/users/4355380"
+      },
+      {
+        "userNo": "TeamA4",
+        "url": "https://osu.ppy.sh/users/21911882"
+      },
+      {
+        "userNo": "TeamA5",
+        "url": "https://osu.ppy.sh/users/7096642"
+      },
+      {
+        "userNo": "TeamA6",
+        "url": "https://osu.ppy.sh/users/13011078"
+      }
+    ]
   },
   {
-    name: 'Team B',
-    players: [
-      { id: 11414953, username: 'Eryth' },
-      { id: 1661227, username: 'Satellite' },
-      { id: 4796794, username: 'Vento' },
-      { id: 4304495, username: '----' },
-      { id: 8655635, username: 'Homutan' },
-      { id: 5326197, username: 'invoker' },
-    ],
-  },
-]; 
+    "team": "TeamB",
+    "members": [
+      {
+        "userNo": "TeamB1",
+        "url": "https://osu.ppy.sh/users/11414953"
+      },
+      {
+        "userNo": "TeamB2",
+        "url": "https://osu.ppy.sh/users/1661227"
+      },
+      {
+        "userNo": "TeamB3",
+        "url": "https://osu.ppy.sh/users/4796794"
+      },
+      {
+        "userNo": "TeamB4",
+        "url": "https://osu.ppy.sh/users/4304495"
+      },
+      {
+        "userNo": "TeamB5",
+        "url": "https://osu.ppy.sh/users/8655635"
+      },
+      {
+        "userNo": "TeamB6",
+        "url": "https://osu.ppy.sh/users/5326197"
+      }
+    ]
+  }
+];

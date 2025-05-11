@@ -3,6 +3,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_OSU_CLIENT_ID: process.env.NEXT_PUBLIC_OSU_CLIENT_ID,
     OSU_CLIENT_SECRET: process.env.OSU_CLIENT_SECRET,
+    ADMIN_USERNAME: process.env.ADMIN_USERNAME,
+    ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
   },
   images: {
     remotePatterns: [
