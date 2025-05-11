@@ -73,6 +73,7 @@ export default function TeamsPage() {
                         key={member.userNo}
                         userId={userId}
                         username={player?.username || 'Loading...'}
+                        url={member.url}
                       />
                     );
                   })}

@@ -46,6 +46,16 @@ function groupByCategory() {
   return groups;
 }
 
+// テーブルセルのカテゴリごとのスタイルマップ
+const categoryStyles: Record<string, { bg: string, text: string }> = {
+  NM: { bg: 'bg-[#222]', text: 'text-[#d2d2d2]' },
+  HD: { bg: 'bg-[#26261c]', text: 'text-[#d2d2d2]' },
+  HR: { bg: 'bg-[#261c1c]', text: 'text-[#d2d2d2]' },
+  DT: { bg: 'bg-[#221c26]', text: 'text-[#d2d2d2]' },
+  FM: { bg: 'bg-[#1d261c]', text: 'text-[#d2d2d2]' },
+  TB: { bg: 'bg-[#222]', text: 'text-[#d2d2d2]' },
+};
+
 export default function MappoolTable() {
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
   const [visible, setVisible] = useState<boolean[]>([]);
@@ -125,7 +135,7 @@ export default function MappoolTable() {
     <main className="min-h-screen bg-[#050813]">
       <div className="container mx-auto px-2 py-8">
         <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">Mappool</h1>
-        <div className="space-y-12">
+        <div className="space-y-4">
           {categoryOrder.map((category, catIdx) => {
             const maps = grouped[category];
             if (!maps) return null;
@@ -181,13 +191,13 @@ export default function MappoolTable() {
                         {maps.map((map, idx) => {
                           const globalIdx = mappoolConfig.findIndex(m => m.mapNo === map.mapNo);
                           const beatmap = beatmaps[globalIdx];
-                          const rowColor = idx % 2 === 0 ? 'bg-[#222] text-white' : 'bg-[#181c24] text-white';
                           const isVisible = visible[globalIdx];
                           if (!isVisible) return null;
+                          const style = categoryStyles[category] || { bg: 'bg-[#222]', text: 'text-white' };
                           return (
                             <tr
                               key={map.mapNo}
-                              className={`${rowColor} animate-fade-in-down`}
+                              className={`${style.bg} ${style.text} animate-fade-in-down`}
                             >
                               <td className="px-2 py-1">{map.mapNo}</td>
                               <td className="px-2 py-1">

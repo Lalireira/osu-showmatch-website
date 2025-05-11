@@ -24,6 +24,7 @@ export async function GET(
     return NextResponse.json({
       username: userData.username,
       avatar_url: userData.avatar_url,
+      country: userData.country_code,
       statistics: {
         pp: userData.statistics?.pp ?? 0,
         accuracy: userData.statistics?.hit_accuracy ?? 0,
