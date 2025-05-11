@@ -6,6 +6,9 @@ export default function Footer() {
           <p className="text-gray-400">
             © {new Date().getFullYear()} osu! Showmatch. All rights reserved.
           </p>
+          <p className="text-gray-500 mt-2">
+            Created by <a href="https://osu.ppy.sh/users/Reira" className="hover:text-[#79b0ea] transition-colors">Reira</a>
+          </p>
         </div>
       </div>
     </footer>

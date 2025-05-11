@@ -157,34 +157,35 @@ export default function MappoolTable() {
                     </div>
                   ) : (
                     <table className="min-w-full text-sm text-left">
+                      {/* Column widths: MapNo(6%), Banner(10%), Artist-Title(28%), Mapper(10%), ID(8%), Length(7%), SR(5%), BPM(5%), CS/AR/OD/HP(4% each) */}
                       <colgroup>
                         <col style={{ width: '6%' }} />
                         <col style={{ width: '10%' }} />
                         <col style={{ width: '28%' }} />
-                        <col style={{ width: '13%' }} />
+                        <col style={{ width: '10%' }} />
                         <col style={{ width: '8%' }} />
-                        <col style={{ width: '8%' }} />
-                        <col style={{ width: '7%' }} />
                         <col style={{ width: '7%' }} />
                         <col style={{ width: '5%' }} />
                         <col style={{ width: '5%' }} />
-                        <col style={{ width: '5%' }} />
-                        <col style={{ width: '6%' }} />
+                        <col style={{ width: '4%' }} />
+                        <col style={{ width: '4%' }} />
+                        <col style={{ width: '4%' }} />
+                        <col style={{ width: '4%' }} />
                       </colgroup>
                       <thead className="bg-[#1a1a1a] text-white">
                         <tr>
-                          <th className="px-2 py-2">MapNo</th>
-                          <th className="px-2 py-2">Banner</th>
-                          <th className="px-2 py-2">Artist - Title [Diff]</th>
-                          <th className="px-2 py-2">Mapper</th>
-                          <th className="px-2 py-2">ID</th>
-                          <th className="px-2 py-2">Length</th>
-                          <th className="px-2 py-2">SR</th>
-                          <th className="px-2 py-2">BPM</th>
-                          <th className="px-2 py-2">CS</th>
-                          <th className="px-2 py-2">AR</th>
-                          <th className="px-2 py-2">OD</th>
-                          <th className="px-2 py-2">HP</th>
+                          <th className="px-2 py-2 font-bold">MapNo</th>
+                          <th className="px-2 py-2 font-bold">Banner</th>
+                          <th className="px-2 py-2 font-bold">Artist - Title [Diff]</th>
+                          <th className="px-2 py-2 font-bold">Mapper</th>
+                          <th className="px-2 py-2 font-bold">ID</th>
+                          <th className="px-2 py-2 font-bold">Length</th>
+                          <th className="px-2 py-2 font-bold">SR</th>
+                          <th className="px-2 py-2 font-bold">BPM</th>
+                          <th className="px-2 py-2 font-bold">CS</th>
+                          <th className="px-2 py-2 font-bold">AR</th>
+                          <th className="px-2 py-2 font-bold">OD</th>
+                          <th className="px-2 py-2 font-bold">HP</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -199,22 +200,22 @@ export default function MappoolTable() {
                               key={map.mapNo}
                               className={`${style.bg} ${style.text} animate-fade-in-down`}
                             >
-                              <td className="px-2 py-1">{map.mapNo}</td>
+                              <td className="px-2 py-1 font-semibold">{map.mapNo}</td>
                               <td className="px-2 py-1">
                                 {beatmap ? (
                                   <Image src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`} alt={beatmap.id?.toString() || ''} width={64} height={36} className="rounded" />
                                 ) : ''}
                               </td>
-                              <td className="px-2 py-1">{beatmap ? `${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title} [${beatmap.version}]` : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? (beatmap.creator || beatmap.beatmapset.creator) : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.id : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? `${Math.floor(beatmap.total_length / 60)}:${(beatmap.total_length % 60).toString().padStart(2, '0')}` : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.difficulty_rating?.toFixed(2) : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.bpm : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.cs : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.ar : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.accuracy : ''}</td>
-                              <td className="px-2 py-1">{beatmap ? beatmap.drain : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? `${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title} [${beatmap.version}]` : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? (beatmap.creator || beatmap.beatmapset.creator) : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.id : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? `${Math.floor(beatmap.total_length / 60)}:${(beatmap.total_length % 60).toString().padStart(2, '0')}` : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.difficulty_rating?.toFixed(2) : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.bpm : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.cs : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.ar : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.accuracy : ''}</td>
+                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.drain : ''}</td>
                             </tr>
                           );
                         })}

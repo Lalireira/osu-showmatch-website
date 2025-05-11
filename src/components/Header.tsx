@@ -10,17 +10,17 @@ export default function Header() {
           </div>
           <ul className="flex space-x-6">
             <li>
-              <Link href="/" className="hover:text-[#79b0ea] transition-colors">
+              <Link href="/" className="hover:text-[#79b0ea] transition-colors font-bold">
                 Home
               </Link>
             </li>
             <li>
-              <Link href="/teams" className="hover:text-[#79b0ea] transition-colors">
+              <Link href="/teams" className="hover:text-[#79b0ea] transition-colors font-bold">
                 Teams
               </Link>
             </li>
             <li>
-              <Link href="/mappool-ui" className="hover:text-[#79b0ea] transition-colors">
+              <Link href="/mappool-ui" className="hover:text-[#79b0ea] transition-colors font-bold">
                 Mappool
               </Link>
             </li>
