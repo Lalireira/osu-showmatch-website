@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
+import { withRateLimit } from '@/lib/rateLimit';
+import { withCSRF, setCSRFToken } from '@/lib/csrf';
 
 const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
@@ -39,7 +41,7 @@ async function getAccessToken(): Promise<string> {
   }
 }
 
-export async function GET(request: Request) {
+async function handler(request: Request) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get('username');
 
@@ -58,7 +60,8 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.json(response.data);
+    const nextResponse = NextResponse.json(response.data);
+    return setCSRFToken(nextResponse);
   } catch (error: any) {
     console.error('Error fetching user data:', error.response?.data || error.message);
     return NextResponse.json(
@@ -66,4 +69,6 @@ export async function GET(request: Request) {
       { status: error.response?.status || 500 }
     );
   }
-} 
+}
+
+export const GET = withRateLimit(withCSRF(handler));

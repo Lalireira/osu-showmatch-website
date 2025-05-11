@@ -203,7 +203,16 @@ export default function MappoolTable() {
                               <td className="px-2 py-1 font-semibold">{map.mapNo}</td>
                               <td className="px-2 py-1">
                                 {beatmap ? (
-                                  <Image src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`} alt={beatmap.id?.toString() || ''} width={64} height={36} className="rounded" />
+                                  <Image
+                                    src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`}
+                                    alt={`${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title}`}
+                                    width={64}
+                                    height={36}
+                                    className="rounded"
+                                    loading="lazy"
+                                    quality={75}
+                                    priority={false}
+                                  />
                                 ) : ''}
                               </td>
                               <td className="px-2 py-1 font-normal">{beatmap ? `${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title} [${beatmap.version}]` : ''}</td>

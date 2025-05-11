@@ -57,4 +57,5 @@ export const ERROR_MESSAGES = {
     INVALID_VERSION: 'キャッシュのバージョンが無効です',
     EXPIRED: 'キャッシュの有効期限が切れています',
   },
-} as const; 
+  SERVER_ERROR: '予期せぬエラーが発生しました。しばらく時間をおいて再度お試しください。',
+} as const;

@@ -1,6 +1,7 @@
 import axios from 'axios';
-import { CACHE_DURATIONS, isCacheValid } from './cacheConfig';
+import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from './cacheConfig';
 
+const API_BASE_URL = '/api/osu';
 const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
 
@@ -11,32 +12,64 @@ interface TokenResponse {
 }
 
 let accessToken: string | null = null;
-let tokenExpiry: number | null = null;
+let tokenExpiry: number = 0;
 
-const userDataCache = new Map<string, { data: any; timestamp: number }>();
+// レート制限の状態を管理
+const rateLimitState = {
+  remaining: 1000,
+  reset: Date.now() + 60000,
+};
+
+// レート制限のチェック
+function checkRateLimit() {
+  const now = Date.now();
+  if (now >= rateLimitState.reset) {
+    rateLimitState.remaining = 1000;
+    rateLimitState.reset = now + 60000;
+  }
+  return rateLimitState.remaining > 0;
+}
+
+// レート制限の更新
+function updateRateLimit(headers: any) {
+  if (headers['x-ratelimit-remaining']) {
+    rateLimitState.remaining = parseInt(headers['x-ratelimit-remaining']);
+  }
+  if (headers['x-ratelimit-reset']) {
+    rateLimitState.reset = parseInt(headers['x-ratelimit-reset']) * 1000;
+  }
+}
 
 async function getAccessToken(): Promise<string> {
-  console.log('Getting access token...');
-  console.log('Client ID:', clientId);
-  console.log('Client Secret:', clientSecret ? '***' : 'undefined');
-
-  if (accessToken && tokenExpiry && Date.now() < tokenExpiry) {
-    console.log('Using cached token');
+  const now = Date.now();
+  if (accessToken && now < tokenExpiry) {
     return accessToken;
   }
 
+  if (!clientId || !clientSecret) {
+    console.error('Missing OSU_CLIENT_ID or OSU_CLIENT_SECRET environment variables');
+    throw new Error('API credentials not configured');
+  }
+
   try {
-    console.log('Requesting new token...');
     const response = await axios.post<TokenResponse>('https://osu.ppy.sh/oauth/token', {
       client_id: clientId,
       client_secret: clientSecret,
       grant_type: 'client_credentials',
       scope: 'public',
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     });
 
-    console.log('Token response received');
+    if (!response.data.access_token) {
+      throw new Error('No access token in response');
+    }
+
     accessToken = response.data.access_token;
-    tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+    tokenExpiry = now + (response.data.expires_in * 1000);
     return accessToken;
   } catch (error: any) {
     console.error('Error getting access token:', {
@@ -48,43 +81,24 @@ async function getAccessToken(): Promise<string> {
   }
 }
 
-export async function getUserData(userId: number) {
-  const cacheKey = `user_${userId}`;
-  const cachedData = userDataCache.get(cacheKey);
-
-  // キャッシュが有効な場合はキャッシュされたデータを返す
-  if (cachedData && isCacheValid(cachedData.timestamp)) {
-    return cachedData.data;
-  }
-
+export async function getUserData(userId: string) {
   try {
-    const response = await fetch(`/api/osu/user/${userId}`);
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch user data');
-    }
-    const data = await response.json();
-    
-    // データをキャッシュに保存
-    userDataCache.set(cacheKey, {
-      data,
-      timestamp: Date.now()
-    });
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching user data:', error);
+    const response = await axios.get(`${API_BASE_URL}/user/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching user data:', error.response?.data || error.message);
     throw error;
   }
 }
 
 export async function getBeatmapData(beatmapId: string) {
-  const response = await fetch(`/api/osu/beatmap?beatmapId=${encodeURIComponent(beatmapId)}`);
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Failed to fetch beatmap data');
+  try {
+    const response = await axios.get(`${API_BASE_URL}/beatmap?beatmapId=${beatmapId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching beatmap data:', error.response?.data || error.message);
+    throw error;
   }
-  return await response.json();
 }
 
 export { getAccessToken }; 
