@@ -10,7 +10,7 @@ export const mappoolConfig: MappoolMapConfig[] = [
   },
   {
     mapNo: 'NM2',
-    url: 'https://osu.ppy.sh/beatmapsets/1536674#osu/3141960'
+    url: 'https://osu.ppy.sh/beatmapsets/2029893#osu/4229966'
   },
   {
     mapNo: 'NM3',

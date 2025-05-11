@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { getAccessToken } from '@/lib/osuApi';
-
-const CACHE_DURATION = 5 * 60; // 5分（秒単位）
+import { generateCacheHeaders, CACHE_DURATIONS } from '@/lib/cacheConfig';
 
 export async function GET(
   request: Request,
@@ -19,8 +18,7 @@ export async function GET(
     });
 
     // レスポンスヘッダーにキャッシュ制御を追加
-    const headers = new Headers();
-    headers.set('Cache-Control', `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate`);
+    const headers = generateCacheHeaders();
     
     const userData = response.data;
     return NextResponse.json({

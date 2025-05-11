@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { CACHE_DURATIONS, isCacheValid } from './cacheConfig';
 
 const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
@@ -12,8 +13,6 @@ interface TokenResponse {
 let accessToken: string | null = null;
 let tokenExpiry: number | null = null;
 
-// キャッシュの設定
-const CACHE_DURATION = 5 * 60 * 1000; // 5分
 const userDataCache = new Map<string, { data: any; timestamp: number }>();
 
 async function getAccessToken(): Promise<string> {
@@ -54,7 +53,7 @@ export async function getUserData(userId: number) {
   const cachedData = userDataCache.get(cacheKey);
 
   // キャッシュが有効な場合はキャッシュされたデータを返す
-  if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+  if (cachedData && isCacheValid(cachedData.timestamp)) {
     return cachedData.data;
   }
 

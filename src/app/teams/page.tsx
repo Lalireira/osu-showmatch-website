@@ -5,6 +5,7 @@ import { teams, Team, Player } from '@/data/teams';
 import { getUserData } from '@/lib/osuApi';
 import PlayerCard from '@/components/PlayerCard';
 import { formatNumber } from '../lib/utils';
+import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 
 interface PlayerWithStats extends Omit<Player, 'statistics'> {
   statistics?: {
@@ -21,46 +22,6 @@ interface TeamWithStats extends Omit<Team, 'players'> {
   players: PlayerWithStats[];
 }
 
-// キャッシュの型定義
-interface PlayerCacheData {
-  data: PlayerWithStats;
-  timestamp: number;
-}
-
-// キャッシュの有効期限（24時間）
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
-
-// キャッシュからデータを取得する関数
-function getFromCache(userId: number): PlayerWithStats | null {
-  if (typeof window === 'undefined') return null;
-  
-  const cached = localStorage.getItem(`player_${userId}`);
-  if (!cached) return null;
-
-  const { data, timestamp }: PlayerCacheData = JSON.parse(cached);
-  const now = Date.now();
-
-  // キャッシュが有効期限内かチェック
-  if (now - timestamp < CACHE_DURATION) {
-    return data;
-  }
-
-  // 期限切れの場合はキャッシュを削除
-  localStorage.removeItem(`player_${userId}`);
-  return null;
-}
-
-// データをキャッシュに保存する関数
-function saveToCache(userId: number, data: PlayerWithStats): void {
-  if (typeof window === 'undefined') return;
-
-  const cacheData: PlayerCacheData = {
-    data,
-    timestamp: Date.now()
-  };
-  localStorage.setItem(`player_${userId}`, JSON.stringify(cacheData));
-}
-
 export default function TeamsPage() {
   const [teamsWithStats, setTeamsWithStats] = useState<TeamWithStats[]>(teams);
 
@@ -72,7 +33,7 @@ export default function TeamsPage() {
             team.players.map(async (player) => {
               try {
                 // キャッシュからデータを取得
-                const cachedData = getFromCache(player.id);
+                const cachedData = getFromLocalStorage<PlayerWithStats>(`player_${player.id}`, CACHE_VERSIONS.PLAYER);
                 if (cachedData) {
                   return cachedData;
                 }
@@ -86,7 +47,7 @@ export default function TeamsPage() {
                 };
                 
                 // 取得したデータをキャッシュに保存
-                saveToCache(player.id, playerData);
+                saveToLocalStorage(`player_${player.id}`, playerData, CACHE_VERSIONS.PLAYER);
                 return playerData;
               } catch (error) {
                 console.error(`Error fetching data for player ${player.username}:`, error);

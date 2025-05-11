@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { mappoolConfig } from '@/data/mappool';
 import { getBeatmapData } from '@/lib/osuApi';
 import { useEffect, useState } from 'react';
+import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 
 interface Beatmap {
   id: number;
@@ -24,46 +25,6 @@ interface Beatmap {
     title: string;
     creator: string;
   };
-}
-
-// キャッシュの型定義
-interface CacheData {
-  data: Beatmap;
-  timestamp: number;
-}
-
-// キャッシュの有効期限（24時間）
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
-
-// キャッシュからデータを取得する関数
-function getFromCache(beatmapId: string): Beatmap | null {
-  if (typeof window === 'undefined') return null;
-  
-  const cached = localStorage.getItem(`beatmap_${beatmapId}`);
-  if (!cached) return null;
-
-  const { data, timestamp }: CacheData = JSON.parse(cached);
-  const now = Date.now();
-
-  // キャッシュが有効期限内かチェック
-  if (now - timestamp < CACHE_DURATION) {
-    return data;
-  }
-
-  // 期限切れの場合はキャッシュを削除
-  localStorage.removeItem(`beatmap_${beatmapId}`);
-  return null;
-}
-
-// データをキャッシュに保存する関数
-function saveToCache(beatmapId: string, data: Beatmap): void {
-  if (typeof window === 'undefined') return;
-
-  const cacheData: CacheData = {
-    data,
-    timestamp: Date.now()
-  };
-  localStorage.setItem(`beatmap_${beatmapId}`, JSON.stringify(cacheData));
 }
 
 // URLからbeatmapset_idとbeatmap_idを抽出する関数
@@ -109,7 +70,7 @@ export default function MappoolTable() {
           const beatmapId = beatmap_id.toString();
 
           // キャッシュからデータを取得
-          const cachedData = getFromCache(beatmapId);
+          const cachedData = getFromLocalStorage<Beatmap>(`beatmap_${beatmapId}`, CACHE_VERSIONS.BEATMAP);
           if (cachedData) {
             results.push(cachedData);
             continue;
@@ -118,7 +79,7 @@ export default function MappoolTable() {
           // キャッシュになければAPIから取得
           const data = await getBeatmapData(beatmapId);
           // 取得したデータをキャッシュに保存
-          saveToCache(beatmapId, data);
+          saveToLocalStorage(`beatmap_${beatmapId}`, data, CACHE_VERSIONS.BEATMAP);
           results.push(data);
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
