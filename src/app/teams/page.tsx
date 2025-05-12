@@ -31,9 +31,11 @@ export default function TeamsPage() {
   const [error, setError] = useState<string | null>(null);
   const [playersLoaded, setPlayersLoaded] = useState(false);
   const [teamLabels, setTeamLabels] = useState<TeamLabel[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchTeams = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch('/api/admin/teams-config');
         if (!response.ok) {
@@ -45,6 +47,7 @@ export default function TeamsPage() {
         setError(err instanceof Error ? err.message : 'Failed to fetch teams');
       } finally {
         setLoading(false);
+        setIsLoading(false);
       }
     };
     fetchTeams();
@@ -53,6 +56,7 @@ export default function TeamsPage() {
   useEffect(() => {
     if (teams.length === 0) return;
     const fetchAllPlayers = async () => {
+      setIsLoading(true);
       const updatedTeams = [...teams];
       await Promise.all(
         updatedTeams.flatMap(team =>
@@ -78,18 +82,27 @@ export default function TeamsPage() {
       );
       setTeams(updatedTeams);
       setPlayersLoaded(true);
+      setIsLoading(false);
     };
     setPlayersLoaded(false);
     fetchAllPlayers();
   }, [teams]);
 
   useEffect(() => {
+    let isMounted = true;
     fetch('/api/admin/team-labels')
       .then(res => res.json())
-      .then(data => setTeamLabels(data));
+      .then(data => {
+        if (isMounted) {
+          setTeamLabels(data);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (loading || !playersLoaded) {
+  if (loading || !playersLoaded || isLoading) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Teams</h1>
