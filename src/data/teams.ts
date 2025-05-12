@@ -4,7 +4,7 @@ export const teams = [
     "members": [
       {
         "userNo": "TeamA1",
-        "url": "https://osu.ppy.sh/users/1184175"
+        "url": "https://osu.ppy.sh/users/35890459"
       },
       {
         "userNo": "TeamA2",

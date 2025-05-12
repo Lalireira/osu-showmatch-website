@@ -9,14 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.0",
     "@prisma/client": "^6.7.0",
+    "@radix-ui/react-avatar": "^1.1.9",
     "@types/ws": "^8.18.1",
     "axios": "^1.9.0",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.43.1",
     "next": "15.3.2",
     "next-auth": "^4.24.11",
+    "pg": "^8.15.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "swr": "^2.3.3",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss-animate": "^1.0.7",
     "ws": "^8.18.2"
   },
   "devDependencies": {

@@ -1,10 +1,14 @@
 "use client";
 
 import Image from 'next/image';
-import { mappoolConfig } from '@/data/mappool';
 import { useEffect, useState } from 'react';
-import { CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 import { extractIdsFromUrl } from '@/lib/utils';
+
+interface MapConfig {
+  id: number;
+  mapNo: string;
+  url: string;
+}
 
 interface Beatmap {
   id: number;
@@ -28,8 +32,8 @@ interface Beatmap {
 }
 
 // カテゴリごとにグループ化
-function groupByCategory() {
-  const groups: Record<string, typeof mappoolConfig> = {};
+function groupByCategory(mappoolConfig: MapConfig[]) {
+  const groups: Record<string, MapConfig[]> = {};
   for (const map of mappoolConfig) {
     // カテゴリ名を抽出（数字を除去）
     const category = map.mapNo.replace(/\d+$/, '');
@@ -86,32 +90,33 @@ const categoryStyles: Record<string, { bg: string, text: string, header: string,
 };
 
 export default function MappoolTable() {
+  const [maps, setMaps] = useState<MapConfig[]>([]);
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
   const [visible, setVisible] = useState<boolean[]>([]);
 
   useEffect(() => {
+    async function fetchMaps() {
+      const response = await fetch('/api/admin/mappool-config');
+      if (!response.ok) return;
+      const data = await response.json();
+      setMaps(data);
+    }
+    fetchMaps();
+  }, []);
+
+  useEffect(() => {
     async function fetchBeatmaps() {
+      if (maps.length === 0) return;
       const results: Beatmap[] = [];
-      for (const map of mappoolConfig) {
+      for (const map of maps) {
         try {
           const { beatmap_id } = extractIdsFromUrl(map.url);
           const beatmapId = beatmap_id.toString();
-
-          // キャッシュからデータを取得
-          const cachedData = getFromLocalStorage<Beatmap>(`beatmap_${beatmapId}`, CACHE_VERSIONS.BEATMAP);
-          if (cachedData) {
-            results.push(cachedData);
-            continue;
-          }
-
-          // サーバーサイドAPIを使用
           const response = await fetch(`/api/osu/beatmap/${beatmapId}`);
           if (!response.ok) {
             throw new Error('Failed to fetch beatmap data');
           }
           const data = await response.json();
-
-          // APIレスポンスの構造に合わせてデータを整形
           const formattedData: Beatmap = {
             id: data.id,
             beatmapset_id: data.beatmapset_id,
@@ -132,9 +137,6 @@ export default function MappoolTable() {
               creator: data.beatmapset?.creator || data.creator
             }
           };
-
-          // 取得したデータをキャッシュに保存
-          saveToLocalStorage(`beatmap_${beatmapId}`, formattedData, CACHE_VERSIONS.BEATMAP);
           results.push(formattedData);
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
@@ -165,9 +167,8 @@ export default function MappoolTable() {
       setVisible(Array(results.length).fill(false));
     }
     fetchBeatmaps();
-  }, []);
+  }, [maps]);
 
-  // 全データ取得後、順次visibleをtrueにしていく
   useEffect(() => {
     if (beatmaps.length === 0) return;
     beatmaps.forEach((_, idx) => {
@@ -177,14 +178,11 @@ export default function MappoolTable() {
           next[idx] = true;
           return next;
         });
-      }, idx * 100); // アニメーション間隔を少し長めに
+      }, idx * 100);
     });
   }, [beatmaps]);
 
-  // カテゴリごとにグループ化
-  const grouped = groupByCategory();
-
-  // カテゴリの表示順
+  const grouped = groupByCategory(maps);
   const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
 
   return (
@@ -195,11 +193,9 @@ export default function MappoolTable() {
         </h1>
         <div className="space-y-8">
           {categoryOrder.map((category, catIdx) => {
-            const maps = grouped[category];
-            if (!maps) return null;
-            // このカテゴリのグローバルインデックス配列
-            const globalIndices = maps.map(map => mappoolConfig.findIndex(m => m.mapNo === map.mapNo));
-            // このカテゴリで1つでもvisibleがtrueならテーブル表示、なければローディング
+            const mapsInCategory = grouped[category];
+            if (!mapsInCategory) return null;
+            const globalIndices = mapsInCategory.map(map => maps.findIndex(m => m.mapNo === map.mapNo));
             const anyVisible = globalIndices.some(idx => visible[idx]);
             return (
               <div
@@ -250,8 +246,8 @@ export default function MappoolTable() {
                         </tr>
                       </thead>
                       <tbody className="overflow-visible">
-                        {maps.map((map, idx) => {
-                          const globalIdx = mappoolConfig.findIndex(m => m.mapNo === map.mapNo);
+                        {mapsInCategory.map((map, idx) => {
+                          const globalIdx = maps.findIndex(m => m.mapNo === map.mapNo);
                           const beatmap = beatmaps[globalIdx];
                           const isVisible = visible[globalIdx];
                           if (!isVisible) return null;
@@ -276,8 +272,8 @@ export default function MappoolTable() {
                               <td className="px-3 py-2 border-b border-[#222]">
                                 <div className="relative w-16 h-8 hover:scale-110 transition-transform duration-200">
                                   <Image
-                                    src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/card.jpg`}
-                                    alt={`${beatmap.artist} - ${beatmap.title}`}
+                                    src={`https://assets.ppy.sh/beatmaps/${beatmap?.beatmapset_id}/covers/card.jpg`}
+                                    alt={`${beatmap?.artist} - ${beatmap?.title}`}
                                     fill
                                     className="object-cover rounded shadow"
                                     style={{ filter: 'brightness(1.1)' }}
@@ -291,20 +287,20 @@ export default function MappoolTable() {
                                   rel="noopener noreferrer"
                                   className="hover:text-[#ff66aa] transition-colors duration-200"
                                 >
-                                  {beatmap.artist} - {beatmap.title} <span className="text-gray-400">[{beatmap.version}]</span>
+                                  {beatmap?.artist} - {beatmap?.title} <span className="text-gray-400">[{beatmap?.version}]</span>
                                 </a>
                               </td>
-                              <td className="px-3 py-2 border-b border-[#222] break-words">{beatmap.creator}</td>
-                              <td className="px-3 py-2 font-mono text-xs border-b border-[#222]">{beatmap.id}</td>
+                              <td className="px-3 py-2 border-b border-[#222] break-words">{beatmap?.creator}</td>
+                              <td className="px-3 py-2 font-mono text-xs border-b border-[#222]">{beatmap?.id}</td>
                               <td className="px-3 py-2 border-b border-[#222]">
-                                {Math.floor(beatmap.total_length / 60)}:{String(beatmap.total_length % 60).padStart(2, '0')}
+                                {beatmap ? `${Math.floor(beatmap.total_length / 60)}:${String(beatmap.total_length % 60).padStart(2, '0')}` : ''}
                               </td>
-                              <td className="px-3 py-2 font-semibold border-b border-[#222]">{beatmap.difficulty_rating.toFixed(2)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{Math.round(beatmap.bpm)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.cs.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.ar.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.accuracy.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.drain.toFixed(1)}</td>
+                              <td className="px-3 py-2 font-semibold border-b border-[#222]">{beatmap?.difficulty_rating?.toFixed(2)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap ? Math.round(beatmap.bpm) : ''}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.cs?.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.ar?.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.accuracy?.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.drain?.toFixed(1)}</td>
                             </tr>
                           );
                         })}
@@ -317,13 +313,11 @@ export default function MappoolTable() {
           })}
         </div>
       </div>
-
       <style jsx global>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes fade-in-down {
           0% {
             opacity: 0;
@@ -334,7 +328,6 @@ export default function MappoolTable() {
             transform: translateY(0);
           }
         }
-
         .animate-fade-in-down {
           animation: fade-in-down 0.5s ease-out forwards;
         }

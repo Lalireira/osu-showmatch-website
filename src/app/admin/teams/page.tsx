@@ -3,22 +3,22 @@
 import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
-import { teams as initialTeams } from '@/data/teams';
 
-interface TeamMember {
+interface Player {
   userNo: string;
   url: string;
 }
+
 interface Team {
   team: string;
-  members: TeamMember[];
+  members: Player[];
 }
 
-export default function TeamsAdminPage() {
+export default function AdminTeamsPage() {
   const { isAuthenticated } = useAdminAuth();
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState('');
@@ -29,8 +29,21 @@ export default function TeamsAdminPage() {
       router.push('/admin');
       return;
     }
-    setTeams(initialTeams);
-    setIsLoading(false);
+    const fetchTeams = async () => {
+      try {
+        const response = await fetch('/api/admin/teams-config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch teams');
+        }
+        const data = await response.json();
+        setTeams(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch teams');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeams();
   }, [isAuthenticated, router]);
 
   // 編集開始
@@ -80,12 +93,8 @@ export default function TeamsAdminPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="p-4">読み込み中...</div>;
-  }
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-[#050813]">
@@ -100,51 +109,58 @@ export default function TeamsAdminPage() {
           {teams.map(team => (
             <div key={team.team} className="bg-[#181c24] p-4 rounded-lg shadow animate-fade-in-down">
               <h2 className="text-2xl font-bold mb-4 text-white">{team.team}</h2>
-              {/* 2列分に分割 */}
-              {Array.from({ length: 3 }).map((_, row) => {
-                const col1 = team.members[row];
-                const col2 = team.members[row + 3];
-                return (
-                  <div className="flex gap-4 mb-2" key={row}>
-                    {[col1, col2].map((member, colIdx) => {
-                      if (!member) return <div className="flex-1" key={colIdx}></div>;
-                      const idx = `${team.team}-${member.userNo}`;
-                      return (
-                        <div className="flex-1 flex items-center space-x-4 p-2 rounded bg-[#222] text-white hover:bg-[#23263a]" key={colIdx}>
-                          <span className="w-20 text-base font-bold text-white">{member.userNo}</span>
-                          {editingIndex === idx ? (
-                            <>
-                              <input
-                                type="text"
-                                value={editingUrl}
-                                onChange={e => setEditingUrl(e.target.value)}
-                                className="flex-grow border rounded px-2 text-white bg-[#23263a]"
-                                style={{ minWidth: 200 }}
-                              />
-                              <button
-                                onClick={() => handleSave(team.team, member.userNo, editingUrl)}
-                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
-                              >保存</button>
-                              <button
-                                onClick={handleCancel}
-                                className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
-                              >キャンセル</button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm text-white break-all flex-grow">{member.url}</span>
-                              <button
-                                onClick={() => handleEdit(team.team, member.userNo, member.url)}
-                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
-                              >編集</button>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+              <ul className="list-disc pl-8">
+                {team.members.map((member) => {
+                  const idx = `${team.team}-${member.userNo}`;
+                  return (
+                    <li key={member.userNo} className="text-white flex items-center gap-2 mb-2">
+                      <span className="w-32 inline-block">{member.userNo}</span>
+                      {editingIndex === idx ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editingUrl}
+                            onChange={e => setEditingUrl(e.target.value)}
+                            className="flex-grow border rounded px-2 text-black bg-white"
+                            style={{ minWidth: 200 }}
+                          />
+                          <button
+                            onClick={async () => {
+                              const newTeams = teams.map(t =>
+                                t.team === team.team
+                                  ? {
+                                      ...t,
+                                      members: t.members.map(m =>
+                                        m.userNo === member.userNo ? { ...m, url: editingUrl } : m
+                                      ),
+                                    }
+                                  : t
+                              );
+                              setTeams(newTeams);
+                              setEditingIndex(null);
+                              setEditingUrl('');
+                              await handleTeamsUpdate(newTeams);
+                            }}
+                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
+                          >保存</button>
+                          <button
+                            onClick={handleCancel}
+                            className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
+                          >キャンセル</button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm break-all flex-grow">{member.url}</span>
+                          <button
+                            onClick={() => handleEdit(team.team, member.userNo, member.url)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                          >編集</button>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           ))}
         </div>
@@ -159,4 +175,4 @@ export default function TeamsAdminPage() {
       </div>
     </div>
   );
-} 
+}

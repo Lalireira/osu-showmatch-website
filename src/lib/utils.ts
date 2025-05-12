@@ -1,3 +1,6 @@
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
 export function formatNumber(num: number | undefined): string {
   if (num === undefined) return '0';
   return num.toLocaleString();
@@ -36,4 +39,8 @@ export function extractUserIdFromUrl(url: string): number {
 
   console.error(`Invalid user URL format: ${url}`);
   throw new Error(`Invalid user URL format: ${url}`);
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }

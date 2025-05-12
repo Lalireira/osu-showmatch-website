@@ -3,31 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
-import { mappoolConfig } from '@/data/mappool';
 
-// カテゴリの定義
-const CATEGORIES = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'] as const;
-type Category = typeof CATEGORIES[number];
-
-interface Map {
-  id: string;
+interface MapConfig {
+  id: number;
+  mapNo: string;
   url: string;
-  beatmapId: string;
-  artist: string;
-  title: string;
-  difficulty: string;
-  difficultyRating: number;
-  creator: string;
-  coverUrl: string;
-  category: Category;
-  number: number;
 }
 
-export default function MapsPage() {
+export default function AdminMapsPage() {
   const { isAuthenticated } = useAdminAuth();
   const router = useRouter();
-  const [maps, setMaps] = useState<Map[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [maps, setMaps] = useState<MapConfig[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState('');
@@ -39,31 +26,24 @@ export default function MapsPage() {
       return;
     }
 
-    // mappoolConfigから初期データを読み込む
-    const initialMaps = mappoolConfig.map(config => {
-      const match = config.mapNo.match(/^([A-Z]+)(\d*)$/);
-      if (!match) return null;
-      const [, category, number] = match;
-      return {
-        id: '',
-        url: config.url,
-        beatmapId: '',
-        artist: '',
-        title: '',
-        difficulty: '',
-        difficultyRating: 0,
-        creator: '',
-        coverUrl: '',
-        category: category as Category,
-        number: number ? parseInt(number, 10) : 1,
-      };
-    }).filter((map): map is Map => map !== null);
-
-    setMaps(initialMaps);
-    setIsLoading(false);
+    const fetchMaps = async () => {
+      try {
+        const response = await fetch('/api/admin/mappool-config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch mappool');
+        }
+        const data = await response.json();
+        setMaps(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch mappool');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMaps();
   }, [isAuthenticated, router]);
 
-  const handleMapsUpdate = async (newMaps: Map[]) => {
+  const handleMapsUpdate = async (newMaps: MapConfig[]) => {
     try {
       const configResponse = await fetch('/api/admin/mappool-config', {
         method: 'PUT',
@@ -83,43 +63,8 @@ export default function MapsPage() {
     }
   };
 
-  // カテゴリごとのマップを取得
-  const getMapsByCategory = (category: Category) => {
-    return maps
-      .filter(m => m.category === category)
-      .sort((a, b) => a.number - b.number);
-  };
-
-  // 編集開始
-  const handleEdit = (index: string, url: string) => {
-    setEditingIndex(index);
-    setEditingUrl(url);
-  };
-
-  // 編集保存
-  const handleSave = (map: Map, newUrl: string) => {
-    setMaps(maps.map(m =>
-      m.category === map.category && m.number === map.number
-        ? { ...m, url: newUrl }
-        : m
-    ));
-    setEditingIndex(null);
-    setEditingUrl('');
-  };
-
-  // 編集キャンセル
-  const handleCancel = () => {
-    setEditingIndex(null);
-    setEditingUrl('');
-  };
-
-  if (isLoading) {
-    return <div className="p-4">読み込み中...</div>;
-  }
-
-  if (error) {
-    return <div className="p-4 text-red-500">{error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-[#050813]">
@@ -130,58 +75,50 @@ export default function MapsPage() {
           </div>
         )}
         <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">マッププール管理</h1>
-        {/* カテゴリごとのマップ一覧 */}
-        <div className="space-y-8">
-          {CATEGORIES.map(category => {
-            const categoryMaps = getMapsByCategory(category);
-            if (categoryMaps.length === 0) return null;
-
-            return (
-              <div key={category} className="bg-[#181c24] p-4 rounded-lg shadow animate-fade-in-down">
-                <h2 className="text-2xl font-bold mb-4 text-white">{category}</h2>
-                <div className="space-y-4">
-                  {categoryMaps.map((map, index) => {
-                    const idx = `${map.category}-${map.number}`;
-                    const rowColor = index % 2 === 0 ? 'bg-[#222] text-white' : 'bg-[#181c24] text-white';
-                    return (
-                      <div key={idx} className={`flex items-center space-x-4 p-2 rounded ${rowColor} hover:bg-[#23263a]`}>
-                        <span className="w-16 text-base font-bold text-white">{map.category}{map.number}</span>
-                        {editingIndex === idx ? (
-                          <>
-                            <input
-                              type="text"
-                              value={editingUrl}
-                              onChange={e => setEditingUrl(e.target.value)}
-                              className="flex-grow border rounded px-2 text-white bg-[#23263a]"
-                              style={{ minWidth: 200 }}
-                            />
-                            <button
-                              onClick={() => handleSave(map, editingUrl)}
-                              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
-                            >保存</button>
-                            <button
-                              onClick={handleCancel}
-                              className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
-                            >キャンセル</button>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm text-white break-all flex-grow">{map.url}</span>
-                            <button
-                              onClick={() => handleEdit(idx, map.url)}
-                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
-                            >編集</button>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {/* 更新ボタン */}
+        <ul>
+          {maps.map((map, idx) => (
+            <li key={map.id} className="text-white flex items-center gap-2 mb-2">
+              <span className="w-24 inline-block">{map.mapNo}</span>
+              {editingIndex === String(map.id) ? (
+                <>
+                  <input
+                    type="text"
+                    value={editingUrl}
+                    onChange={e => setEditingUrl(e.target.value)}
+                    className="flex-grow border rounded px-2 text-black bg-white"
+                    style={{ minWidth: 200 }}
+                  />
+                  <button
+                    onClick={async () => {
+                      const newMaps = maps.map(m =>
+                        m.id === map.id
+                          ? { ...m, url: editingUrl, mapNo: m.mapNo }
+                          : m
+                      );
+                      setMaps(newMaps);
+                      setEditingIndex(null);
+                      setEditingUrl('');
+                      await handleMapsUpdate(newMaps);
+                    }}
+                    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
+                  >保存</button>
+                  <button
+                    onClick={() => { setEditingIndex(null); setEditingUrl(''); }}
+                    className="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
+                  >キャンセル</button>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm break-all flex-grow">{map.url}</span>
+                  <button
+                    onClick={() => { setEditingIndex(String(map.id)); setEditingUrl(map.url); }}
+                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                  >編集</button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
         <div className="mt-8">
           <button
             onClick={() => handleMapsUpdate(maps)}

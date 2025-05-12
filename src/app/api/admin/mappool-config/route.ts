@@ -1,34 +1,33 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
+import { db } from '@/lib/db';
+import { mappool } from '@/lib/schema';
 
-interface MapConfig {
-  category: string;
-  number: number;
-  url: string;
+export async function GET() {
+  try {
+    const mappoolData = await db.select().from(mappool);
+    return NextResponse.json(mappoolData);
+  } catch (error) {
+    console.error('Failed to fetch mappool config:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
 }
 
-// mappoolConfigの更新
 export async function PUT(request: Request) {
   try {
-    const { maps } = await request.json() as { maps: MapConfig[] };
+    const { maps } = await request.json();
 
-    // mappoolConfigの形式に変換
-    const mappoolConfig = maps.map((map) => ({
-      mapNo: `${map.category}${map.number}`,
-      url: map.url,
-    }));
+    // 既存のデータを削除
+    await db.delete(mappool);
 
-    // ファイルパスを取得
-    const filePath = join(process.cwd(), 'src', 'data', 'mappool.ts');
-
-    // ファイルの内容を生成
-    const fileContent = `// このファイルは自動生成されます。直接編集しないでください。
-export const mappoolConfig = ${JSON.stringify(mappoolConfig, null, 2)};
-`;
-
-    // ファイルに書き込み
-    await writeFile(filePath, fileContent, 'utf-8');
+    // 新しいデータを挿入
+    for (const map of maps) {
+      // mapNoがundefinedの場合はスキップ
+      if (!map.mapNo) continue;
+      await db.insert(mappool).values({
+        mapNo: map.mapNo,
+        url: map.url
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
