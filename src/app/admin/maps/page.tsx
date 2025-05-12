@@ -45,7 +45,7 @@ export default function MapsPage() {
 
     // mappoolConfigから初期データを読み込む
     const initialMaps = mappoolConfig.map(config => {
-      const match = config.mapNo.match(/^([A-Z]+)(\d+)$/);
+      const match = config.mapNo.match(/^([A-Z]+)(\d*)$/);
       if (!match) return null;
       const [, category, number] = match;
       return {
@@ -59,7 +59,7 @@ export default function MapsPage() {
         creator: '',
         coverUrl: '',
         category: category as Category,
-        number: parseInt(number, 10),
+        number: number ? parseInt(number, 10) : 1,
       };
     }).filter((map): map is Map => map !== null);
 
@@ -234,4 +234,4 @@ export default function MapsPage() {
       </div>
     </div>
   );
-} 
+}

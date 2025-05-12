@@ -10,6 +10,9 @@ export type AuthState = {
 // ローカルストレージのキー
 const AUTH_STATE_KEY = 'admin_auth_state';
 
+const AUTO_LOGOUT_MINUTES = 15; // 15分
+const AUTO_LOGOUT_MS = AUTO_LOGOUT_MINUTES * 60 * 1000;
+
 // クライアントサイドでの認証状態管理
 export function useAdminAuth() {
   const [authState, setAuthState] = useState<AuthState>(() => {
@@ -36,6 +39,37 @@ export function useAdminAuth() {
       localStorage.setItem(AUTH_STATE_KEY, JSON.stringify(authState));
     }
   }, [authState]);
+
+  useEffect(() => {
+    if (!authState.isAuthenticated) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        logout();
+        alert('一定時間操作がなかったため自動的にログアウトしました。');
+      }, AUTO_LOGOUT_MS);
+    };
+
+    // ユーザー操作イベント
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart'];
+    events.forEach(event =>
+      window.addEventListener(event, resetTimer)
+    );
+
+    // 初回セット
+    resetTimer();
+
+    // クリーンアップ
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event =>
+        window.removeEventListener(event, resetTimer)
+      );
+    };
+  }, [authState.isAuthenticated]);
 
   const login = async (username: string, password: string) => {
     try {
@@ -87,4 +121,4 @@ export function useAdminAuth() {
     login,
     logout,
   };
-} 
+}

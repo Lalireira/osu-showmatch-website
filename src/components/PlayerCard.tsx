@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { getUserData } from '@/lib/osuApi';
 
 interface PlayerCardProps {
   userId: number;
@@ -8,6 +7,7 @@ interface PlayerCardProps {
   url: string;
   index?: number;
   comment?: string;
+  userData?: UserData | null;
 }
 
 interface UserData {
@@ -35,7 +35,7 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000;
 // キャッシュからデータを取得する関数
 function getFromCache(userId: number): UserData | null {
   if (typeof window === 'undefined') return null;
-  
+
   const cached = localStorage.getItem(`user_${userId}`);
   if (!cached) return null;
 
@@ -63,21 +63,41 @@ function saveToCache(userId: number, data: UserData): void {
   localStorage.setItem(`user_${userId}`, JSON.stringify(cacheData));
 }
 
-export default function PlayerCard({ userId, username, url, index = 0, comment }: PlayerCardProps) {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function PlayerCard({ userId, username, url, index = 0, comment, userData: providedUserData }: PlayerCardProps) {
+  console.log(`PlayerCard for user ${userId} (${username}):`, { providedUserData });
+
+  const [userData, setUserData] = useState<UserData | null>(providedUserData || null);
+  const [isLoading, setIsLoading] = useState(!providedUserData);
   const [error, setError] = useState<string | null>(null);
 
+  // コンポーネントマウント時の初期データをログ出力
   useEffect(() => {
+    console.log(`PlayerCard mounted for user ${userId} with:`, {
+      providedUserData,
+      currentUserData: userData,
+      isLoading
+    });
+  }, []);
+
+  useEffect(() => {
+    // If userData is provided externally, don't fetch
+    if (providedUserData) {
+      console.log(`Using provided userData for user ${userId}:`, providedUserData);
+      return;
+    }
+
     const fetchUserData = async () => {
       try {
         // キャッシュからデータを取得
+        // 一時的にキャッシュを無効化
+        /*
         const cachedData = getFromCache(userId);
         if (cachedData) {
           setUserData(cachedData);
           setIsLoading(false);
           return;
         }
+        */
 
         // キャッシュになければAPIから取得
         const response = await fetch(`/api/osu/user/${userId}`);
@@ -85,11 +105,23 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
           throw new Error(`Failed to fetch user data: ${response.statusText}`);
         }
         const data = await response.json();
-        console.log('API Response:', data);
-        
+
+        console.log(`API Response for user ${userId}:`, data);
+
+        // API のレスポンス形式に合わせてデータを整形
+        const formattedData: UserData = {
+          username: data.username,
+          avatar_url: data.avatar_url,
+          country: data.country || data.country_code || '', // country または country_code を使用
+          statistics: data.statistics
+        };
+
+        console.log(`Formatted data for user ${userId}:`, formattedData);
+
         // 取得したデータをキャッシュに保存
-        saveToCache(userId, data);
-        setUserData(data);
+        // 一時的にキャッシュへの保存を無効化
+        // saveToCache(userId, formattedData);
+        setUserData(formattedData);
       } catch (err) {
         console.error('Error fetching user data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch user data');
@@ -99,7 +131,7 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
     };
 
     fetchUserData();
-  }, [userId]);
+  }, [userId, providedUserData]);
 
   if (isLoading) {
     return (
@@ -122,7 +154,27 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
             <div className="w-16 aspect-square bg-gray-700 rounded-lg"></div>
             <div className="flex-grow">
               <h3 className="text-lg font-semibold mb-1">{username}</h3>
-              <p className="text-sm text-red-400">Error: {error || 'Failed to load data'}</p>
+              <p className="text-sm text-red-400">Error: {error || 'Failed to load user data'}</p>
+              <p className="text-xs text-gray-400">User ID: {userId}</p>
+            </div>
+          </div>
+        </div>
+      </a>
+    );
+  }
+
+  // データ構造の検証
+  if (!userData.username) {
+    console.error(`Missing username for user ${userId}:`, userData);
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        <div className="bg-gray-800 rounded-lg p-4 shadow-lg animate-fade-in-down" style={{ animationDelay: `${index * 0.1}s` }}>
+          <div className="flex items-start gap-3">
+            <div className="w-16 aspect-square bg-gray-700 rounded-lg"></div>
+            <div className="flex-grow">
+              <h3 className="text-lg font-semibold mb-1">{username}</h3>
+              <p className="text-sm text-red-400">Error: Invalid user data (missing username)</p>
+              <p className="text-xs text-gray-400">User ID: {userId}</p>
             </div>
           </div>
         </div>
@@ -151,19 +203,20 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
         {/* Background Avatar */}
         <div className="absolute inset-0 opacity-5">
           <Image
-            src={userData.avatar_url}
+            src={userData.avatar_url || 'https://osu.ppy.sh/images/layout/avatar-guest.png'}
             alt=""
             fill
+            priority
             className="object-cover"
           />
         </div>
-        
+
         <div className="flex items-start gap-4 relative">
           {/* Left side: Avatar */}
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-700 flex-shrink-0">
             <Image
-              src={userData.avatar_url}
-              alt={`${userData.username}'s avatar`}
+              src={userData.avatar_url || 'https://osu.ppy.sh/images/layout/avatar-guest.png'}
+              alt={`${userData.username || username}'s avatar`}
               width={48}
               height={48}
               className="object-cover"
@@ -173,7 +226,11 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
           {/* Center: Username, Stats and Comment */}
           <div className="flex-grow min-w-0 max-w-[400px]">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold">{userData.username}</h2>
+              <h2 className="text-lg font-bold">
+                {userData.username === 'undefined' || userData.username === undefined ?
+                  (username || `Player ${userId}`) :
+                  userData.username}
+              </h2>
             </div>
             <div className="flex gap-6 mt-2 items-end">
               <div>
@@ -212,4 +269,4 @@ export default function PlayerCard({ userId, username, url, index = 0, comment }
       </div>
     </a>
   );
-} 
+}

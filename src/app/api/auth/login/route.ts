@@ -5,9 +5,18 @@ export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
 
+    // 環境変数の生の値を確認
+    console.log('Raw environment variables:', {
+      ADMIN_USERNAME: process.env.ADMIN_USERNAME,
+      ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
+      // 環境変数の生の値を文字コードで確認
+      ADMIN_USERNAME_CHARS: process.env.ADMIN_USERNAME?.split('').map(c => c.charCodeAt(0)),
+      ADMIN_PASSWORD_CHARS: process.env.ADMIN_PASSWORD?.split('').map(c => c.charCodeAt(0)),
+    });
+
     // 環境変数から認証情報を取得（より安全な方法）
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME?.trim() || '';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim() || '';
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
     // デバッグログ（より詳細な情報）
     console.log('Environment variables:', {
@@ -46,13 +55,20 @@ export async function POST(req: NextRequest) {
 
     // 文字列の比較を詳細に確認
     const usernameMatch = username === ADMIN_USERNAME;
-    const passwordMatch = password === ADMIN_PASSWORD;
 
-    // 文字コードの比較
+    // パスワードの比較を改善
+    // 1. 両方のパスワードを正規化（trimと改行文字の削除）
+    const normalizedProvidedPassword = password.trim().replace(/[\r\n]+/g, '');
+    const normalizedEnvPassword = ADMIN_PASSWORD.trim().replace(/[\r\n]+/g, '');
+
+    // 2. 文字列としての比較
+    const passwordMatch = normalizedProvidedPassword === normalizedEnvPassword;
+
+    // デバッグ用の文字コード比較（問題診断用）
     const usernameChars = [...username].map(c => c.charCodeAt(0));
     const envUsernameChars = [...ADMIN_USERNAME].map(c => c.charCodeAt(0));
-    const passwordChars = [...password].map(c => c.charCodeAt(0));
-    const envPasswordChars = [...ADMIN_PASSWORD].map(c => c.charCodeAt(0));
+    const passwordChars = [...normalizedProvidedPassword].map(c => c.charCodeAt(0));
+    const envPasswordChars = [...normalizedEnvPassword].map(c => c.charCodeAt(0));
 
     console.log('Authentication details:', {
       usernameMatch,
@@ -64,15 +80,15 @@ export async function POST(req: NextRequest) {
       // 文字列の比較結果を詳細に表示
       passwordComparison: {
         length: {
-          provided: password.length,
-          env: ADMIN_PASSWORD.length,
-          match: password.length === ADMIN_PASSWORD.length
+          provided: normalizedProvidedPassword.length,
+          env: normalizedEnvPassword.length,
+          match: normalizedProvidedPassword.length === normalizedEnvPassword.length
         },
-        characters: Array.from({ length: Math.max(password.length, ADMIN_PASSWORD.length) }, (_, i) => ({
+        characters: Array.from({ length: Math.max(normalizedProvidedPassword.length, normalizedEnvPassword.length) }, (_, i) => ({
           index: i,
-          provided: password[i] ? password[i].charCodeAt(0) : null,
-          env: ADMIN_PASSWORD[i] ? ADMIN_PASSWORD[i].charCodeAt(0) : null,
-          match: password[i] === ADMIN_PASSWORD[i]
+          provided: normalizedProvidedPassword[i] ? normalizedProvidedPassword[i].charCodeAt(0) : null,
+          env: normalizedEnvPassword[i] ? normalizedEnvPassword[i].charCodeAt(0) : null,
+          match: normalizedProvidedPassword[i] === normalizedEnvPassword[i]
         }))
       }
     });
@@ -93,4 +109,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

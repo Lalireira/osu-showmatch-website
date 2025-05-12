@@ -7,10 +7,10 @@ export default function Footer() {
             © {new Date().getFullYear()} osu! Showmatch. All rights reserved.
           </p>
           <p className="text-gray-500 mt-2">
-            Created by <a href="https://osu.ppy.sh/users/Reira" className="hover:text-[#79b0ea] transition-colors">Reira</a>
+            Created by <a href="https://x.com/lalireira" target="_blank" rel="noopener noreferrer" className="hover:text-[#79b0ea] transition-colors">Reira</a>
           </p>
         </div>
       </div>
     </footer>
   );
-} 
+}

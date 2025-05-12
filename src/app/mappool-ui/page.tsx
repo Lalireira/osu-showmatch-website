@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { mappoolConfig } from '@/data/mappool';
-import { getBeatmapData } from '@/lib/osuApi';
 import { useEffect, useState } from 'react';
 import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 import { extractIdsFromUrl } from '@/lib/utils';
@@ -28,6 +27,40 @@ interface Beatmap {
   };
 }
 
+// カラーテーマの定義
+const categoryColors = {
+  NM: {
+    light: '#282830',
+    dark: '#1a1a25',
+    accent: '#2a2a35'
+  },
+  HD: {
+    light: '#33331a',
+    dark: '#26260e',
+    accent: '#404020'
+  },
+  HR: {
+    light: '#331a1a',
+    dark: '#260e0e',
+    accent: '#402020'
+  },
+  DT: {
+    light: '#2a1a33',
+    dark: '#1e0e26',
+    accent: '#352040'
+  },
+  FM: {
+    light: '#1a331a',
+    dark: '#0e260e',
+    accent: '#204020'
+  },
+  TB: {
+    light: '#282830',
+    dark: '#1a1a25',
+    accent: '#2a2a35'
+  }
+};
+
 // カテゴリごとにグループ化
 function groupByCategory() {
   const groups: Record<string, typeof mappoolConfig> = {};
@@ -47,13 +80,43 @@ function groupByCategory() {
 }
 
 // テーブルセルのカテゴリごとのスタイルマップ
-const categoryStyles: Record<string, { bg: string, text: string }> = {
-  NM: { bg: 'bg-[#222]', text: 'text-[#d2d2d2]' },
-  HD: { bg: 'bg-[#26261c]', text: 'text-[#d2d2d2]' },
-  HR: { bg: 'bg-[#261c1c]', text: 'text-[#d2d2d2]' },
-  DT: { bg: 'bg-[#221c26]', text: 'text-[#d2d2d2]' },
-  FM: { bg: 'bg-[#1d261c]', text: 'text-[#d2d2d2]' },
-  TB: { bg: 'bg-[#222]', text: 'text-[#d2d2d2]' },
+const categoryStyles: Record<string, { bg: string, text: string, header: string, titleBg: string }> = {
+  NM: {
+    bg: 'bg-[#1a1a22]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#222228]',
+    titleBg: 'bg-[#15151d]'
+  },
+  HD: {
+    bg: 'bg-[#22220e]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#2a2a14]',
+    titleBg: 'bg-[#1a1a08]'
+  },
+  HR: {
+    bg: 'bg-[#220e0e]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#2a1414]',
+    titleBg: 'bg-[#1a0808]'
+  },
+  DT: {
+    bg: 'bg-[#1a0e22]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#22142a]',
+    titleBg: 'bg-[#15081a]'
+  },
+  FM: {
+    bg: 'bg-[#0e220e]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#142a14]',
+    titleBg: 'bg-[#081a08]'
+  },
+  TB: {
+    bg: 'bg-[#1a1a22]',
+    text: 'text-[#f0f0f0]',
+    header: 'bg-[#222228]',
+    titleBg: 'bg-[#15151d]'
+  },
 };
 
 export default function MappoolTable() {
@@ -75,11 +138,38 @@ export default function MappoolTable() {
             continue;
           }
 
-          // キャッシュになければAPIから取得
-          const data = await getBeatmapData(beatmapId);
+          // サーバーサイドAPIを使用
+          const response = await fetch(`/api/osu/beatmap/${beatmapId}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch beatmap data');
+          }
+          const data = await response.json();
+
+          // APIレスポンスの構造に合わせてデータを整形
+          const formattedData: Beatmap = {
+            id: data.id,
+            beatmapset_id: data.beatmapset_id,
+            version: data.version,
+            total_length: data.total_length,
+            difficulty_rating: data.difficulty_rating,
+            bpm: data.bpm,
+            cs: data.cs,
+            ar: data.ar,
+            accuracy: data.accuracy,
+            drain: data.drain,
+            artist: data.beatmapset?.artist || data.artist,
+            title: data.beatmapset?.title || data.title,
+            creator: data.beatmapset?.creator || data.creator,
+            beatmapset: {
+              artist: data.beatmapset?.artist || data.artist,
+              title: data.beatmapset?.title || data.title,
+              creator: data.beatmapset?.creator || data.creator
+            }
+          };
+
           // 取得したデータをキャッシュに保存
-          saveToLocalStorage(`beatmap_${beatmapId}`, data, CACHE_VERSIONS.BEATMAP);
-          results.push(data);
+          saveToLocalStorage(`beatmap_${beatmapId}`, formattedData, CACHE_VERSIONS.BEATMAP);
+          results.push(formattedData);
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
           const { beatmap_id, beatmapset_id } = extractIdsFromUrl(map.url);
@@ -121,7 +211,7 @@ export default function MappoolTable() {
           next[idx] = true;
           return next;
         });
-      }, idx * 80); // 遅延はお好みで
+      }, idx * 100); // アニメーション間隔を少し長めに
     });
   }, [beatmaps]);
 
@@ -132,10 +222,12 @@ export default function MappoolTable() {
   const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
 
   return (
-    <main className="min-h-screen bg-[#050813]">
-      <div className="container mx-auto px-2 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">Mappool</h1>
-        <div className="space-y-4">
+    <main className="min-h-screen bg-gradient-to-b from-[#030408] to-[#050810] font-sans overflow-hidden">
+      <div className="container mx-auto px-4 py-10">
+        <h1 className="text-5xl font-extrabold mb-10 text-center text-white animate-fade-in-down tracking-wider" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
+          Mappool
+        </h1>
+        <div className="space-y-8">
           {categoryOrder.map((category, catIdx) => {
             const maps = grouped[category];
             if (!maps) return null;
@@ -146,21 +238,24 @@ export default function MappoolTable() {
             return (
               <div
                 key={category}
-                className="animate-fade-in-down"
-                style={{ animationDelay: `${catIdx * 120}ms` }}
+                className="animate-fade-in-down rounded-xl overflow-hidden shadow-2xl"
+                style={{
+                  animationDelay: `${catIdx * 150}ms`,
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                  background: 'rgba(10, 10, 15, 0.7)'
+                }}
               >
-                <h2 className="text-2xl font-bold mb-4 text-white">{category}</h2>
-                <div className="overflow-x-auto rounded-lg min-h-[60px]">
+                <h2 className={`text-2xl font-bold p-4 text-white ${categoryStyles[category].titleBg}`}>{category}</h2>
+                <div className="overflow-x-hidden overflow-y-hidden min-h-[60px]">
                   {!anyVisible ? (
-                    <div className="flex items-center justify-center h-16">
+                    <div className="flex items-center justify-center h-20">
                       <span className="text-white text-lg animate-pulse">loading...</span>
                     </div>
                   ) : (
                     <table className="min-w-full text-sm text-left">
-                      {/* Column widths: MapNo(6%), Banner(10%), Artist-Title(28%), Mapper(10%), ID(8%), Length(7%), SR(5%), BPM(5%), CS/AR/OD/HP(4% each) */}
                       <colgroup>
+                        <col style={{ width: '5%' }} />
                         <col style={{ width: '6%' }} />
-                        <col style={{ width: '10%' }} />
                         <col style={{ width: '28%' }} />
                         <col style={{ width: '10%' }} />
                         <col style={{ width: '8%' }} />
@@ -172,59 +267,78 @@ export default function MappoolTable() {
                         <col style={{ width: '4%' }} />
                         <col style={{ width: '4%' }} />
                       </colgroup>
-                      <thead className="bg-[#1a1a1a] text-white">
+                      <thead className={`${categoryStyles[category].header} text-white uppercase tracking-wider`}>
                         <tr>
-                          <th className="px-2 py-2 font-bold">MapNo</th>
-                          <th className="px-2 py-2 font-bold">Banner</th>
-                          <th className="px-2 py-2 font-bold">Artist - Title [Diff]</th>
-                          <th className="px-2 py-2 font-bold">Mapper</th>
-                          <th className="px-2 py-2 font-bold">ID</th>
-                          <th className="px-2 py-2 font-bold">Length</th>
-                          <th className="px-2 py-2 font-bold">SR</th>
-                          <th className="px-2 py-2 font-bold">BPM</th>
-                          <th className="px-2 py-2 font-bold">CS</th>
-                          <th className="px-2 py-2 font-bold">AR</th>
-                          <th className="px-2 py-2 font-bold">OD</th>
-                          <th className="px-2 py-2 font-bold">HP</th>
+                          <th className="px-3 py-2 font-bold">MapNo</th>
+                          <th className="px-3 py-2 font-bold">Banner</th>
+                          <th className="px-3 py-2 font-bold">Artist - Title [Diff]</th>
+                          <th className="px-3 py-2 font-bold">Mapper</th>
+                          <th className="px-3 py-2 font-bold">ID</th>
+                          <th className="px-3 py-2 font-bold">Length</th>
+                          <th className="px-3 py-2 font-bold">SR</th>
+                          <th className="px-3 py-2 font-bold">BPM</th>
+                          <th className="px-3 py-2 font-bold">CS</th>
+                          <th className="px-3 py-2 font-bold">AR</th>
+                          <th className="px-3 py-2 font-bold">OD</th>
+                          <th className="px-3 py-2 font-bold">HP</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="overflow-visible">
                         {maps.map((map, idx) => {
                           const globalIdx = mappoolConfig.findIndex(m => m.mapNo === map.mapNo);
                           const beatmap = beatmaps[globalIdx];
                           const isVisible = visible[globalIdx];
                           if (!isVisible) return null;
-                          const style = categoryStyles[category] || { bg: 'bg-[#222]', text: 'text-white' };
+                          const style = categoryStyles[category] || {
+                            bg: 'bg-[#1a1a22]',
+                            text: 'text-[#f0f0f0]',
+                            header: 'bg-[#222228]',
+                            titleBg: 'bg-[#15151d]'
+                          };
                           return (
                             <tr
                               key={map.mapNo}
-                              className={`${style.bg} ${style.text} animate-fade-in-down`}
+                              className={`${style.bg} ${style.text} hover:bg-[#181928] hover:scale-102 shadow-md rounded-xl relative overflow-hidden transition-transform duration-200 cursor-pointer`}
+                              style={{
+                                animation: 'fadeIn 0.3s ease-in-out forwards',
+                                animationDelay: `${idx * 80}ms`,
+                                opacity: 0,
+                                height: '45px'
+                              }}
                             >
-                              <td className="px-2 py-1 font-semibold">{map.mapNo}</td>
-                              <td className="px-2 py-1">
-                                {beatmap ? (
+                              <td className="px-3 py-2 font-semibold border-b border-[#222] text-center">{map.mapNo}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">
+                                <div className="relative w-20 h-10 hover:scale-110 transition-transform duration-200">
                                   <Image
-                                    src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/cover.jpg`}
-                                    alt={`${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title}`}
-                                    width={64}
-                                    height={36}
-                                    className="rounded"
-                                    loading="lazy"
-                                    quality={75}
-                                    priority={false}
+                                    src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/card.jpg`}
+                                    alt={`${beatmap.artist} - ${beatmap.title}`}
+                                    fill
+                                    className="object-cover rounded shadow"
+                                    style={{ filter: 'brightness(1.1)' }}
                                   />
-                                ) : ''}
+                                </div>
                               </td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? `${beatmap.beatmapset.artist} - ${beatmap.beatmapset.title} [${beatmap.version}]` : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? (beatmap.creator || beatmap.beatmapset.creator) : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.id : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? `${Math.floor(beatmap.total_length / 60)}:${(beatmap.total_length % 60).toString().padStart(2, '0')}` : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.difficulty_rating?.toFixed(2) : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.bpm : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.cs : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.ar : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.accuracy : ''}</td>
-                              <td className="px-2 py-1 font-normal">{beatmap ? beatmap.drain : ''}</td>
+                              <td className="px-3 py-2 font-medium border-b border-[#222] max-w-xs truncate whitespace-nowrap overflow-hidden text-ellipsis">
+                                <a
+                                  href={map.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:text-[#ff66aa] transition-colors duration-200"
+                                >
+                                  {beatmap.artist} - {beatmap.title} <span className="text-gray-400">[{beatmap.version}]</span>
+                                </a>
+                              </td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.creator}</td>
+                              <td className="px-3 py-2 font-mono text-xs border-b border-[#222]">{beatmap.id}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">
+                                {Math.floor(beatmap.total_length / 60)}:{String(beatmap.total_length % 60).padStart(2, '0')}
+                              </td>
+                              <td className="px-3 py-2 font-semibold border-b border-[#222]">{beatmap.difficulty_rating.toFixed(2)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{Math.round(beatmap.bpm)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.cs.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.ar.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.accuracy.toFixed(1)}</td>
+                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.drain.toFixed(1)}</td>
                             </tr>
                           );
                         })}
@@ -237,6 +351,28 @@ export default function MappoolTable() {
           })}
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fade-in-down {
+          0% {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in-down {
+          animation: fade-in-down 0.5s ease-out forwards;
+        }
+      `}</style>
     </main>
   );
-} 
+}
