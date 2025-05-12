@@ -1,7 +1,5 @@
 import axios from 'axios';
-import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from './cacheConfig';
 
-const API_BASE_URL = '/api/osu';
 const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
 
