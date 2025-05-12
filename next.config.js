@@ -29,6 +29,11 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    // 画像の最適化設定
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    formats: ['image/webp'],
+    minimumCacheTTL: 60,
   },
   // 開発環境でのキャッシュを無効化
   onDemandEntries: {
@@ -36,6 +41,41 @@ const nextConfig = {
     pagesBufferLength: 0,
   },
   allowedDevOrigins: ['192.168.11.3'],
+  // ビルド最適化設定
+  swcMinify: true, // SWCによる最適化を有効化
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production', // 本番環境でconsole.logを削除
+  },
+  // エッジ関数の設定
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3000', '192.168.11.3'],
+    },
+  },
+  // キャッシュ設定
+  generateEtags: true,
+  // 静的生成の設定
+  output: 'standalone',
+  // 圧縮設定
+  compress: true,
+  // パフォーマンス最適化
+  poweredByHeader: false,
+  reactStrictMode: true,
 };
 
-module.exports = nextConfig; 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+const { PHASE_DEVELOPMENT_SERVER } = require('next/constants');
+
+module.exports = (phase) => {
+  if (phase === PHASE_DEVELOPMENT_SERVER) {
+    // 開発環境での追加設定
+    return {
+      ...nextConfig,
+      // 開発環境固有の設定
+    };
+  }
+  return withBundleAnalyzer(nextConfig);
+};
