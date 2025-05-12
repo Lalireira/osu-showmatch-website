@@ -23,20 +23,20 @@ export async function PUT(request: Request) {
     console.log('--- mappool 更新リクエスト ---');
     console.log('Before:', before);
     console.log('After:', maps);
-    before.forEach(oldMap => {
-      const newMap = maps.find((m: any) => m.mapNo === oldMap.mapNo);
+    before.forEach((oldMap: { mapNo: string; url: string }) => {
+      const newMap = maps.find((m: { mapNo: string; url: string }) => m.mapNo === oldMap.mapNo);
       if (newMap && newMap.url !== oldMap.url) {
         console.log(`mapNo ${oldMap.mapNo}: URL changed from ${oldMap.url} to ${newMap.url}`);
       }
     });
-    maps.forEach((newMap: any) => {
-      const oldMap = before.find((m: any) => m.mapNo === newMap.mapNo);
+    maps.forEach((newMap: { mapNo: string; url: string }) => {
+      const oldMap = before.find((m: { mapNo: string; url: string }) => m.mapNo === newMap.mapNo);
       if (!oldMap) {
         console.log(`mapNo ${newMap.mapNo}: 新規追加 (URL: ${newMap.url})`);
       }
     });
-    before.forEach(oldMap => {
-      const newMap = maps.find((m: any) => m.mapNo === oldMap.mapNo);
+    before.forEach((oldMap: { mapNo: string; url: string }) => {
+      const newMap = maps.find((m: { mapNo: string; url: string }) => m.mapNo === oldMap.mapNo);
       if (!newMap) {
         console.log(`mapNo ${oldMap.mapNo}: 削除されました (元URL: ${oldMap.url})`);
       }
