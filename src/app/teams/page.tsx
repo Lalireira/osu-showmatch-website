@@ -25,13 +25,6 @@ interface TeamLabel {
   displayName: string;
 }
 
-// チーム名の表示ラベルマッピング
-const teamDisplayNames: Record<string, string> = {
-  TeamA: 'TeamA', // 例: 'Red Team'
-  TeamB: 'TeamB', // 例: 'Blue Team'
-  // 必要に応じて追加・編集
-};
-
 export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +81,7 @@ export default function TeamsPage() {
     };
     setPlayersLoaded(false);
     fetchAllPlayers();
-  }, [teams.length]);
+  }, [teams]);
 
   useEffect(() => {
     fetch('/api/admin/team-labels')
