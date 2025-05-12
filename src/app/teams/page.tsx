@@ -46,15 +46,12 @@ export default function TeamsPage() {
         for (const id of allIds) {
           try {
             // キャッシュ優先
-            // 一時的にキャッシュを無効化
-            /*
             const cached = getFromLocalStorage<PlayerWithStats>(`user_${id}`, CACHE_VERSIONS.PLAYER);
             if (cached) {
               console.log(`Using cached data for user ${id}:`, cached);
               newPlayersData[id] = cached;
               continue;
             }
-            */
 
             console.log(`Fetching data for user ${id} from API`);
             // サーバーサイドAPIを使用
@@ -84,8 +81,8 @@ export default function TeamsPage() {
               };
 
               console.log(`Formatted data for user ${id}:`, newPlayersData[id]);
-              // 一時的にキャッシュへの保存を無効化
-              // saveToLocalStorage(`user_${id}`, newPlayersData[id], CACHE_VERSIONS.PLAYER);
+              // キャッシュに保存
+              saveToLocalStorage(`user_${id}`, newPlayersData[id], CACHE_VERSIONS.PLAYER);
             } catch (apiError) {
               console.error(`API error for user ${id}:`, apiError);
               // APIエラーの場合でもプレイヤーデータを仮作成

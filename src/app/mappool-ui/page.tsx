@@ -303,12 +303,12 @@ export default function MappoolTable() {
                                 animation: 'fadeIn 0.3s ease-in-out forwards',
                                 animationDelay: `${idx * 80}ms`,
                                 opacity: 0,
-                                height: '45px'
+                                height: '30px'
                               }}
                             >
                               <td className="px-3 py-2 font-semibold border-b border-[#222] text-center">{map.mapNo}</td>
                               <td className="px-3 py-2 border-b border-[#222]">
-                                <div className="relative w-20 h-10 hover:scale-110 transition-transform duration-200">
+                                <div className="relative w-16 h-8 hover:scale-110 transition-transform duration-200">
                                   <Image
                                     src={`https://assets.ppy.sh/beatmaps/${beatmap.beatmapset_id}/covers/card.jpg`}
                                     alt={`${beatmap.artist} - ${beatmap.title}`}
@@ -318,7 +318,7 @@ export default function MappoolTable() {
                                   />
                                 </div>
                               </td>
-                              <td className="px-3 py-2 font-medium border-b border-[#222] max-w-xs truncate whitespace-nowrap overflow-hidden text-ellipsis">
+                              <td className="px-3 py-2 font-medium border-b border-[#222] max-w-xs break-words">
                                 <a
                                   href={map.url}
                                   target="_blank"
@@ -328,7 +328,7 @@ export default function MappoolTable() {
                                   {beatmap.artist} - {beatmap.title} <span className="text-gray-400">[{beatmap.version}]</span>
                                 </a>
                               </td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap.creator}</td>
+                              <td className="px-3 py-2 border-b border-[#222] break-words">{beatmap.creator}</td>
                               <td className="px-3 py-2 font-mono text-xs border-b border-[#222]">{beatmap.id}</td>
                               <td className="px-3 py-2 border-b border-[#222]">
                                 {Math.floor(beatmap.total_length / 60)}:{String(beatmap.total_length % 60).padStart(2, '0')}

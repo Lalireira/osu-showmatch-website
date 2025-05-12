@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getBeatmapsetData } from '@/lib/osuApi';
 import { generateCacheHeaders } from '@/lib/cacheConfig';
+import { handleAPIError, withTimeout } from '@/lib/apiErrorHandler';
+
+export const runtime = 'edge'; // エッジ関数として実行
 
 export async function GET(
   request: Request,
@@ -8,17 +11,15 @@ export async function GET(
 ) {
   try {
     const { id } = await context.params;
-    const data = await getBeatmapsetData(id);
 
-    // レスポンスヘッダーにキャッシュ制御を追加
-    const headers = generateCacheHeaders();
+    // タイムアウト付きでビートマップセットデータを取得
+    const data = await withTimeout(getBeatmapsetData(id));
+
+    // ビートマップセットデータは頻繁に更新されないため、LONGキャッシュを使用
+    const headers = generateCacheHeaders('LONG');
 
     return NextResponse.json(data, { headers });
   } catch (error) {
-    console.error('Error in beatmapset API route:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch beatmapset data' },
-      { status: 500 }
-    );
+    return handleAPIError(error);
   }
 }

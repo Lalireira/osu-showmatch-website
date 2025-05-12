@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { getAccessToken } from '@/lib/osuApi';
-import { generateCacheHeaders, CACHE_DURATIONS } from '@/lib/cacheConfig';
+import { generateCacheHeaders } from '@/lib/cacheConfig';
+import { handleAPIError, withTimeout, APIError } from '@/lib/apiErrorHandler';
+
+export const runtime = 'edge'; // エッジ関数として実行
 
 export async function GET(
   request: Request,
@@ -11,29 +14,32 @@ export async function GET(
     const { userId } = await context.params;
     console.log(`[API] Getting data for user ID: ${userId}`);
 
-    const token = await getAccessToken();
+    // タイムアウト付きでアクセストークンを取得
+    const token = await withTimeout(getAccessToken());
     console.log(`[API] Got access token: ${token.substring(0, 10)}...`);
 
     const apiUrl = `https://osu.ppy.sh/api/v2/users/${userId}`;
     console.log(`[API] Calling osu API: ${apiUrl}`);
 
-    const response = await axios.get(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    // タイムアウト付きでAPIリクエストを実行
+    const response = await withTimeout(
+      axios.get(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+    );
 
     console.log(`[API] osu API response status: ${response.status}`);
-    console.log(`[API] osu API response data:`, JSON.stringify(response.data).substring(0, 500));
 
-    // レスポンスヘッダーにキャッシュ制御を追加
-    const headers = generateCacheHeaders();
+    // レスポンスヘッダーにキャッシュ制御を追加（ユーザーデータは頻繁に更新される可能性があるためSHORTを使用）
+    const headers = generateCacheHeaders('SHORT');
 
     const userData = response.data;
 
     // 正しいユーザー名があるかチェック
     if (!userData.username) {
-      console.error(`[API] Missing username in osu API response for user ${userId}:`, userData);
+      throw new APIError(`Missing username in osu API response for user ${userId}`, 404);
     }
 
     // デバッグ：API応答の構造を詳細に確認
@@ -69,11 +75,7 @@ export async function GET(
     console.log(`[API] Sending response for user ${userId}:`, responseData);
 
     return NextResponse.json(responseData, { headers });
-  } catch (error: any) {
-    console.error('Error fetching user data:', error.response?.data || error.message);
-    return NextResponse.json(
-      { error: error.response?.data?.error || 'Failed to fetch user data' },
-      { status: error.response?.status || 500 }
-    );
+  } catch (error) {
+    return handleAPIError(error);
   }
 }

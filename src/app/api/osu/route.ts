@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import { withRateLimit } from '@/lib/rateLimit';
 import { withCSRF, setCSRFToken } from '@/lib/csrf';
+import { handleAPIError, withTimeout, APIError } from '@/lib/apiErrorHandler';
+import { generateCacheHeaders } from '@/lib/cacheConfig';
 
 const clientId = process.env.NEXT_PUBLIC_OSU_CLIENT_ID;
 const clientSecret = process.env.OSU_CLIENT_SECRET;
@@ -20,55 +22,60 @@ async function getAccessToken(): Promise<string> {
   }
 
   try {
-    const response = await axios.post<TokenResponse>('https://osu.ppy.sh/oauth/token', {
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'client_credentials',
-      scope: 'public',
-    });
+    const response = await withTimeout(
+      axios.post<TokenResponse>('https://osu.ppy.sh/oauth/token', {
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'client_credentials',
+        scope: 'public',
+      })
+    );
 
     if (!response.data.access_token) {
-      throw new Error('No access token received');
+      throw new APIError('No access token received', 500);
     }
 
     const newToken = response.data.access_token;
     accessToken = newToken;
     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
     return newToken;
-  } catch (error: any) {
-    console.error('Error getting access token:', error.response?.data || error.message);
+  } catch (error) {
+    console.error('Error getting access token:', error);
     throw error;
   }
 }
+
+export const runtime = 'edge'; // エッジ関数として実行
 
 async function handler(request: Request) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get('username');
 
   if (!username) {
-    return NextResponse.json({ error: 'Username is required' }, { status: 400 });
+    throw new APIError('Username is required', 400);
   }
 
   try {
     const token = await getAccessToken();
-    const response = await axios.get(`https://osu.ppy.sh/api/v2/users/${username}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      params: {
-        mode: 'osu',
-      },
-    });
-
-    const nextResponse = NextResponse.json(response.data);
-    return setCSRFToken(nextResponse);
-  } catch (error: any) {
-    console.error('Error fetching user data:', error.response?.data || error.message);
-    return NextResponse.json(
-      { error: error.response?.data?.error || error.message },
-      { status: error.response?.status || 500 }
+    const response = await withTimeout(
+      axios.get(`https://osu.ppy.sh/api/v2/users/${username}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          mode: 'osu',
+        },
+      })
     );
+
+    // ユーザーデータは頻繁に更新される可能性があるためSHORTキャッシュを使用
+    const headers = generateCacheHeaders('SHORT');
+    const nextResponse = NextResponse.json(response.data, { headers });
+    return setCSRFToken(nextResponse);
+  } catch (error) {
+    return handleAPIError(error);
   }
 }
 
-export const GET = withRateLimit(withCSRF(handler));
+// レート制限とCSRF保護を適用
+export const GET = withCSRF(withRateLimit(handler));

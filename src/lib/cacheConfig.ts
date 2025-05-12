@@ -16,11 +16,27 @@ export const CACHE_VERSIONS = {
   PLAYER: '1.0.0',
 } as const;
 
+export const CACHE_CONFIG = {
+  SHORT: {
+    'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+    'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+    'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+  },
+  MEDIUM: {
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+    'CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+    'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
+  },
+  LONG: {
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+    'CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+    'Vercel-CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200'
+  }
+} as const;
+
 // キャッシュのヘッダーを生成する関数
-export function generateCacheHeaders(duration: number = CACHE_DURATIONS.API_RESPONSE) {
-  const headers = new Headers();
-  headers.set('Cache-Control', `public, s-maxage=${duration}, stale-while-revalidate`);
-  return headers;
+export function generateCacheHeaders(duration: keyof typeof CACHE_CONFIG = 'MEDIUM') {
+  return CACHE_CONFIG[duration];
 }
 
 // キャッシュが有効かどうかをチェックする関数
@@ -31,18 +47,18 @@ export function isCacheValid(timestamp: number, duration: number = CACHE_DURATIO
 // ローカルストレージからキャッシュを取得する関数
 export function getFromLocalStorage<T>(key: string, version: string): T | null {
   if (typeof window === 'undefined') return null;
-  
+
   const cached = localStorage.getItem(key);
   if (!cached) return null;
 
   const { data, timestamp, cacheVersion }: { data: T; timestamp: number; cacheVersion: string } = JSON.parse(cached);
-  
+
   // キャッシュのバージョンが一致しない場合は無効
   if (cacheVersion !== version) {
     localStorage.removeItem(key);
     return null;
   }
-  
+
   // キャッシュが有効期限内かチェック
   if (isCacheValid(timestamp)) {
     return data;
@@ -75,4 +91,4 @@ export function invalidateCache(type: keyof typeof CACHE_VERSIONS): void {
       localStorage.removeItem(key);
     }
   });
-} 
+}
