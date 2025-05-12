@@ -76,7 +76,7 @@ export default function AdminMapsPage() {
         )}
         <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">マッププール管理</h1>
         <ul>
-          {maps.map((map, idx) => (
+          {maps.map((map) => (
             <li key={map.id} className="text-white flex items-center gap-2 mb-2">
               <span className="w-24 inline-block">{map.mapNo}</span>
               {editingIndex === String(map.id) ? (

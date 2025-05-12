@@ -52,22 +52,6 @@ export default function AdminTeamsPage() {
     setEditingUrl(url);
   };
 
-  // 編集保存
-  const handleSave = (team: string, userNo: string, newUrl: string) => {
-    setTeams(teams.map(t =>
-      t.team === team
-        ? {
-            ...t,
-            members: t.members.map(m =>
-              m.userNo === userNo ? { ...m, url: newUrl } : m
-            ),
-          }
-        : t
-    ));
-    setEditingIndex(null);
-    setEditingUrl('');
-  };
-
   // 編集キャンセル
   const handleCancel = () => {
     setEditingIndex(null);

@@ -1,11 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { extractUserIdFromUrl } from '@/lib/utils';
 import PlayerCard from '@/components/PlayerCard';
+import { extractUserIdFromUrl } from '@/lib/utils';
 
 interface Player {
   userNo: string;
