@@ -69,7 +69,7 @@ export default function TeamsPage() {
                 member.country = data.country;
                 member.countryRank = data.countryRank;
                 member.avatarUrl = data.avatarUrl;
-              } catch (error) {
+              } catch {
                 // エラーは無視して続行
               }
             }
