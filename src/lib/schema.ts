@@ -12,3 +12,8 @@ export const mappool = pgTable('mappool', {
   mapNo: text('map_no').notNull(),
   url: text('url').notNull(),
 });
+
+export const teamLabels = pgTable('team_labels', {
+  team: text('team').primaryKey(),
+  displayName: text('display_name').notNull(),
+});

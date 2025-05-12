@@ -14,6 +14,11 @@ interface Team {
   members: Player[];
 }
 
+interface TeamLabel {
+  team: string;
+  displayName: string;
+}
+
 export default function AdminTeamsPage() {
   const { isAuthenticated } = useAdminAuth();
   const router = useRouter();
@@ -23,6 +28,9 @@ export default function AdminTeamsPage() {
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [teamLabels, setTeamLabels] = useState<TeamLabel[]>([]);
+  const [labelEditingIndex, setLabelEditingIndex] = useState<string | null>(null);
+  const [labelEditingValue, setLabelEditingValue] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -45,6 +53,13 @@ export default function AdminTeamsPage() {
     };
     fetchTeams();
   }, [isAuthenticated, router]);
+
+  // チームラベル取得
+  useEffect(() => {
+    fetch('/api/admin/team-labels')
+      .then(res => res.json())
+      .then(data => setTeamLabels(data));
+  }, []);
 
   // 編集開始
   const handleEdit = (team: string, userNo: string, url: string) => {
@@ -77,22 +92,80 @@ export default function AdminTeamsPage() {
     }
   };
 
+  // チームラベル保存
+  const handleLabelsUpdate = async (labels: TeamLabel[]) => {
+    await fetch('/api/admin/team-labels', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ labels }),
+    });
+    setTeamLabels(labels);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-[#050813]">
       <div className="container mx-auto px-2 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">チーム管理</h1>
+        <div className="mb-8 p-4 bg-[#181c24] rounded-lg shadow">
+          <h2 className="text-xl font-bold mb-2 text-white">チーム表示名編集</h2>
+          <ul>
+            {teams.map(team => {
+              const label = teamLabels.find(l => l.team === team.team)?.displayName || team.team;
+              const idx = team.team;
+              return (
+                <li key={team.team} className="flex items-center gap-2 mb-2 text-white">
+                  <span className="w-32 inline-block font-semibold">{team.team}</span>
+                  {labelEditingIndex === idx ? (
+                    <>
+                      <input
+                        type="text"
+                        value={labelEditingValue}
+                        onChange={e => setLabelEditingValue(e.target.value)}
+                        className="border rounded px-2 text-black bg-white"
+                        style={{ minWidth: 120 }}
+                      />
+                      <button
+                        onClick={async () => {
+                          const newLabels = teamLabels.filter(l => l.team !== team.team).concat({ team: team.team, displayName: labelEditingValue });
+                          await handleLabelsUpdate(newLabels);
+                          setLabelEditingIndex(null);
+                          setLabelEditingValue('');
+                        }}
+                        className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
+                      >保存</button>
+                      <button
+                        onClick={() => { setLabelEditingIndex(null); setLabelEditingValue(''); }}
+                        className="px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 font-semibold"
+                      >キャンセル</button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm break-all flex-grow">{label}</span>
+                      <button
+                        onClick={() => { setLabelEditingIndex(idx); setLabelEditingValue(label); }}
+                        className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold"
+                      >編集</button>
+                    </>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         {successMessage && (
-          <div className="mb-4 p-3 bg-green-600 text-white text-center rounded font-bold animate-fade-in-down">
-            {successMessage}
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="p-6 bg-green-600 text-white text-center rounded-xl font-bold shadow-lg animate-fade-in-down text-2xl">
+              {successMessage}
+            </div>
           </div>
         )}
-        <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">チーム管理</h1>
         <div className="space-y-8">
           {teams.map(team => (
             <div key={team.team} className="bg-[#181c24] p-4 rounded-lg shadow animate-fade-in-down">
-              <h2 className="text-2xl font-bold mb-4 text-white">{team.team}</h2>
+              <h2 className="text-2xl font-bold mb-4 text-white">{teamLabels.find(l => l.team === team.team)?.displayName || team.team}</h2>
               <ul className="list-disc pl-8">
                 {team.members.map((member) => {
                   const idx = `${team.team}-${member.userNo}`;
