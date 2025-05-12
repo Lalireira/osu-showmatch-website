@@ -53,18 +53,18 @@ export function createServerError(message: string = 'Internal Server Error'): Ap
 }
 
 // エラーハンドリングのラッパー関数
-export function withErrorHandling(handler: Function) {
+export function withErrorHandling(handler: (req: Request) => Promise<Response>) {
   return async (req: Request) => {
     try {
       return await handler(req);
     } catch (error) {
       console.error('Error in handler:', error);
-      
+
       if (error instanceof Error) {
         return createErrorResponse(createServerError(error.message));
       }
-      
+
       return createErrorResponse(createServerError());
     }
   };
-} 
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { teams } from '@/data/teams';
 import PlayerCard from '@/components/PlayerCard';
-import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
+import { CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 import { extractUserIdFromUrl } from '@/lib/utils';
 
 interface PlayerWithStats {

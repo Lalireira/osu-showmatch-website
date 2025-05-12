@@ -11,6 +11,11 @@ interface TokenResponse {
   access_token: string;
 }
 
+interface RateLimitHeaders {
+  'x-ratelimit-remaining'?: string;
+  'x-ratelimit-reset'?: string;
+}
+
 let accessToken: string | null = null;
 let tokenExpiry: number | null = null;
 
@@ -31,7 +36,7 @@ function checkRateLimit() {
 }
 
 // レート制限の更新
-function updateRateLimit(headers: any) {
+function updateRateLimit(headers: RateLimitHeaders) {
   if (headers['x-ratelimit-remaining']) {
     rateLimitState.remaining = parseInt(headers['x-ratelimit-remaining']);
   }
@@ -61,8 +66,12 @@ export async function getAccessToken(): Promise<string> {
     accessToken = newToken;
     tokenExpiry = Date.now() + (response.data.expires_in * 1000);
     return newToken;
-  } catch (error: any) {
-    console.error('Error getting access token:', error.response?.data || error.message);
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error getting access token:', error.response?.data || error.message);
+    } else {
+      console.error('Error getting access token:', error);
+    }
     throw error;
   }
 }
@@ -141,6 +150,24 @@ export async function getBeatmapData(beatmapId: string) {
   }
 }
 
+interface Beatmap {
+  id: number;
+  version: string;
+  difficulty_rating: number;
+  mode: string;
+  status: string;
+}
+
+interface Beatmapset {
+  id: number;
+  artist: string;
+  title: string;
+  creator: string;
+  covers: Record<string, string>;
+  status: string;
+  beatmaps: Beatmap[];
+}
+
 export async function getBeatmapsetData(beatmapsetId: string) {
   try {
     const token = await getAccessToken();
@@ -154,7 +181,7 @@ export async function getBeatmapsetData(beatmapsetId: string) {
       throw new Error('Failed to fetch beatmapset data');
     }
 
-    const data = await response.json();
+    const data = await response.json() as Beatmapset;
     return {
       id: data.id,
       artist: data.artist,
@@ -162,7 +189,7 @@ export async function getBeatmapsetData(beatmapsetId: string) {
       creator: data.creator,
       covers: data.covers,
       status: data.status,
-      beatmaps: data.beatmaps.map((beatmap: any) => ({
+      beatmaps: data.beatmaps.map(beatmap => ({
         id: beatmap.id,
         version: beatmap.version,
         difficulty_rating: beatmap.difficulty_rating,

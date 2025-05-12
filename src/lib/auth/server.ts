@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthError } from '../errorHandler';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
@@ -80,7 +79,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token }) {
       return token;
     },
-    async session({ session, token }) {
+    async session({ session }) {
       return session;
     },
   },

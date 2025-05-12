@@ -23,46 +23,6 @@ interface UserData {
   } | null;
 }
 
-// キャッシュの型定義
-interface UserCacheData {
-  data: UserData;
-  timestamp: number;
-}
-
-// キャッシュの有効期限（24時間）
-const CACHE_DURATION = 24 * 60 * 60 * 1000;
-
-// キャッシュからデータを取得する関数
-function getFromCache(userId: number): UserData | null {
-  if (typeof window === 'undefined') return null;
-
-  const cached = localStorage.getItem(`user_${userId}`);
-  if (!cached) return null;
-
-  const { data, timestamp }: UserCacheData = JSON.parse(cached);
-  const now = Date.now();
-
-  // キャッシュが有効期限内かチェック
-  if (now - timestamp < CACHE_DURATION) {
-    return data;
-  }
-
-  // 期限切れの場合はキャッシュを削除
-  localStorage.removeItem(`user_${userId}`);
-  return null;
-}
-
-// データをキャッシュに保存する関数
-function saveToCache(userId: number, data: UserData): void {
-  if (typeof window === 'undefined') return;
-
-  const cacheData: UserCacheData = {
-    data,
-    timestamp: Date.now()
-  };
-  localStorage.setItem(`user_${userId}`, JSON.stringify(cacheData));
-}
-
 export default function PlayerCard({ userId, username, url, index = 0, comment, userData: providedUserData }: PlayerCardProps) {
   console.log(`PlayerCard for user ${userId} (${username}):`, { providedUserData });
 

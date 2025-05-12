@@ -27,40 +27,6 @@ interface Beatmap {
   };
 }
 
-// カラーテーマの定義
-const categoryColors = {
-  NM: {
-    light: '#282830',
-    dark: '#1a1a25',
-    accent: '#2a2a35'
-  },
-  HD: {
-    light: '#33331a',
-    dark: '#26260e',
-    accent: '#404020'
-  },
-  HR: {
-    light: '#331a1a',
-    dark: '#260e0e',
-    accent: '#402020'
-  },
-  DT: {
-    light: '#2a1a33',
-    dark: '#1e0e26',
-    accent: '#352040'
-  },
-  FM: {
-    light: '#1a331a',
-    dark: '#0e260e',
-    accent: '#204020'
-  },
-  TB: {
-    light: '#282830',
-    dark: '#1a1a25',
-    accent: '#2a2a35'
-  }
-};
-
 // カテゴリごとにグループ化
 function groupByCategory() {
   const groups: Record<string, typeof mappoolConfig> = {};

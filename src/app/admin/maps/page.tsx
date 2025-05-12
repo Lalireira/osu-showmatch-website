@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation';
 import { mappoolConfig } from '@/data/mappool';
-import { extractIdsFromUrl } from '@/lib/utils';
 
 // カテゴリの定義
 const CATEGORIES = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'] as const;
@@ -30,9 +29,6 @@ export default function MapsPage() {
   const [maps, setMaps] = useState<Map[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [inputUrl, setInputUrl] = useState('');
-  const [selectedCategory] = useState<Category>('NM');
-  const [selectedNumber] = useState<number>(1);
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
