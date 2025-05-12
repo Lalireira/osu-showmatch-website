@@ -8,6 +8,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -26,6 +28,9 @@ export const metadata: Metadata = {
     description: "osu! Showmatch Tournament Website",
   },
   robots: "index, follow",
+  other: {
+    "Cache-Control": "public, max-age=31536000, immutable",
+  },
 };
 
 export default function RootLayout({
@@ -35,6 +40,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className="bg-[#0a0a0a] text-white min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow">

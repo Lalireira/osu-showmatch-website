@@ -32,7 +32,7 @@ const nextConfig = {
     // 画像の最適化設定
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
-    formats: ['image/webp'],
+    formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
   },
   // 開発環境でのキャッシュを無効化
@@ -43,13 +43,16 @@ const nextConfig = {
   allowedDevOrigins: ['192.168.11.3'],
   // ビルド最適化設定
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production', // 本番環境でconsole.logを削除
+    removeConsole: process.env.NODE_ENV === 'production',
+    styledComponents: true,
   },
   // エッジ関数の設定
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', '192.168.11.3'],
     },
+    optimizeCss: true,
+    optimizePackageImports: ['@heroicons/react', '@headlessui/react'],
   },
   // キャッシュ設定
   generateEtags: true,
@@ -70,10 +73,8 @@ const { PHASE_DEVELOPMENT_SERVER } = require('next/constants');
 
 module.exports = (phase) => {
   if (phase === PHASE_DEVELOPMENT_SERVER) {
-    // 開発環境での追加設定
     return {
       ...nextConfig,
-      // 開発環境固有の設定
     };
   }
   return withBundleAnalyzer(nextConfig);
