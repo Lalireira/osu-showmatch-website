@@ -16,12 +16,37 @@ export async function PUT(request: Request) {
   try {
     const { maps } = await request.json();
 
+    // 既存データを取得
+    const before = await db.select().from(mappool);
+
+    // 変更内容を比較してログ出力
+    console.log('--- mappool 更新リクエスト ---');
+    console.log('Before:', before);
+    console.log('After:', maps);
+    before.forEach(oldMap => {
+      const newMap = maps.find((m: any) => m.mapNo === oldMap.mapNo);
+      if (newMap && newMap.url !== oldMap.url) {
+        console.log(`mapNo ${oldMap.mapNo}: URL changed from ${oldMap.url} to ${newMap.url}`);
+      }
+    });
+    maps.forEach((newMap: any) => {
+      const oldMap = before.find((m: any) => m.mapNo === newMap.mapNo);
+      if (!oldMap) {
+        console.log(`mapNo ${newMap.mapNo}: 新規追加 (URL: ${newMap.url})`);
+      }
+    });
+    before.forEach(oldMap => {
+      const newMap = maps.find((m: any) => m.mapNo === oldMap.mapNo);
+      if (!newMap) {
+        console.log(`mapNo ${oldMap.mapNo}: 削除されました (元URL: ${oldMap.url})`);
+      }
+    });
+
     // 既存のデータを削除
     await db.delete(mappool);
 
     // 新しいデータを挿入
     for (const map of maps) {
-      // mapNoがundefinedの場合はスキップ
       if (!map.mapNo) continue;
       await db.insert(mappool).values({
         mapNo: map.mapNo,
