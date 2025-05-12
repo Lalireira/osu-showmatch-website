@@ -33,6 +33,7 @@ export default function TeamsPage() {
   const [teamLabels, setTeamLabels] = useState<TeamLabel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // チームデータの取得
   useEffect(() => {
     const fetchTeams = async () => {
       setIsLoading(true);
@@ -53,44 +54,51 @@ export default function TeamsPage() {
     fetchTeams();
   }, []);
 
+  // プレイヤーデータの取得
   useEffect(() => {
-    if (teams.length === 0) return;
     const fetchAllPlayers = async () => {
-      setIsLoading(true);
-      // deep copy
-      const updatedTeams = JSON.parse(JSON.stringify(teams));
-      // すべてのユーザー情報をPromise.allで取得
-      await Promise.all(
-        updatedTeams.flatMap((team: Team) =>
-          team.members.map(async (member: Player) => {
-            if (!member.username) {
-              try {
-                const userId = extractUserIdFromUrl(member.url);
-                const response = await fetch(`/api/osu/user/${userId}`);
-                if (!response.ok) return;
-                const data = await response.json();
-                member.username = data.username;
-                member.pp = data.pp;
-                member.rank = data.statistics?.global_rank;
-                member.country = data.country;
-                member.countryRank = data.countryRank;
-                member.avatarUrl = data.avatarUrl;
-              } catch {
-                // エラーは無視して続行
-              }
-            }
-          })
-        )
-      );
-      // すべて取得完了後に一斉にセット
-      setTeams(updatedTeams);
-      setPlayersLoaded(true);
-      setIsLoading(false);
-    };
-    setPlayersLoaded(false);
-    fetchAllPlayers();
-  }, [teams.length]);
+      if (teams.length === 0 || playersLoaded) return;
 
+      setIsLoading(true);
+      const updatedTeams = JSON.parse(JSON.stringify(teams));
+
+      try {
+        await Promise.all(
+          updatedTeams.flatMap((team: Team) =>
+            team.members.map(async (member: Player) => {
+              if (!member.username) {
+                try {
+                  const userId = extractUserIdFromUrl(member.url);
+                  const response = await fetch(`/api/osu/user/${userId}`);
+                  if (!response.ok) return;
+                  const data = await response.json();
+                  member.username = data.username;
+                  member.pp = data.pp;
+                  member.rank = data.statistics?.global_rank;
+                  member.country = data.country;
+                  member.countryRank = data.countryRank;
+                  member.avatarUrl = data.avatarUrl;
+                } catch {
+                  // エラーは無視して続行
+                }
+              }
+            })
+          )
+        );
+
+        setTeams(updatedTeams);
+        setPlayersLoaded(true);
+      } catch (error) {
+        console.error('Error fetching player data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllPlayers();
+  }, [teams.length, playersLoaded]);
+
+  // チームラベルの取得
   useEffect(() => {
     let isMounted = true;
     fetch('/api/admin/team-labels')
