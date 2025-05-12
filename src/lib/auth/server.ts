@@ -7,8 +7,10 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
+type RequestHandler = (req: NextRequest) => Promise<NextResponse>;
+
 // 管理者認証のミドルウェア
-export function withAdminAuth(handler: Function) {
+export function withAdminAuth(handler: RequestHandler) {
   return async (req: NextRequest) => {
     // Basic認証のヘッダーをチェック
     const authHeader = req.headers.get('authorization');
@@ -82,4 +84,4 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-}; 
+};

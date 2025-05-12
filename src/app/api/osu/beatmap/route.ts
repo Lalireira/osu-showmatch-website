@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAccessToken } from '@/lib/osuApi';
 
-interface ErrorResponse {
-  message: string;
-}
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const beatmapId = searchParams.get('beatmapId');

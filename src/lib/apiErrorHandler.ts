@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 
+export interface APIErrorDetails {
+  [key: string]: unknown;
+}
+
 export class APIError extends Error {
   constructor(
     message: string,
     public status: number = 500,
-    public details?: any
+    public details?: APIErrorDetails
   ) {
     super(message);
     this.name = 'APIError';

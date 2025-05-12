@@ -2,12 +2,10 @@
 
 import { useState } from 'react';
 import { useAdminAuth } from '@/lib/auth/client';
-import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const { login, error } = useAdminAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,4 +81,4 @@ export default function LoginForm() {
       </div>
     </div>
   );
-} 
+}

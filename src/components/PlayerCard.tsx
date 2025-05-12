@@ -77,7 +77,7 @@ export default function PlayerCard({ userId, username, url, index = 0, comment, 
       currentUserData: userData,
       isLoading
     });
-  }, []);
+  }, [userId, providedUserData, userData, isLoading]);
 
   useEffect(() => {
     // If userData is provided externally, don't fetch
@@ -88,17 +88,6 @@ export default function PlayerCard({ userId, username, url, index = 0, comment, 
 
     const fetchUserData = async () => {
       try {
-        // キャッシュからデータを取得
-        // 一時的にキャッシュを無効化
-        /*
-        const cachedData = getFromCache(userId);
-        if (cachedData) {
-          setUserData(cachedData);
-          setIsLoading(false);
-          return;
-        }
-        */
-
         // キャッシュになければAPIから取得
         const response = await fetch(`/api/osu/user/${userId}`);
         if (!response.ok) {
@@ -117,10 +106,6 @@ export default function PlayerCard({ userId, username, url, index = 0, comment, 
         };
 
         console.log(`Formatted data for user ${userId}:`, formattedData);
-
-        // 取得したデータをキャッシュに保存
-        // 一時的にキャッシュへの保存を無効化
-        // saveToCache(userId, formattedData);
         setUserData(formattedData);
       } catch (err) {
         console.error('Error fetching user data:', err);

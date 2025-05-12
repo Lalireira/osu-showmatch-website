@@ -128,7 +128,7 @@ export default function TeamsPage() {
       <div className="container mx-auto px-2 py-8">
         <h1 className="text-4xl font-bold mb-8 text-center text-white animate-fade-in-down">Teams</h1>
         <div className="space-y-8">
-          {teams.map((team, idx) => (
+          {teams.map((team) => (
             <div key={team.team} className="bg-[#181c24] rounded-lg shadow p-6 animate-fade-in-down">
               <h2 className="text-2xl font-bold mb-4 text-white">{team.team}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

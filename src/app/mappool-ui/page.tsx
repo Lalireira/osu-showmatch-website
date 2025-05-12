@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { mappoolConfig } from '@/data/mappool';
 import { useEffect, useState } from 'react';
-import { CACHE_DURATIONS, CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
+import { CACHE_VERSIONS, getFromLocalStorage, saveToLocalStorage } from '@/lib/cacheConfig';
 import { extractIdsFromUrl } from '@/lib/utils';
 
 interface Beatmap {

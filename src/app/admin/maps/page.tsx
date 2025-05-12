@@ -87,43 +87,6 @@ export default function MapsPage() {
     }
   };
 
-  const handleMapAdd = () => {
-    if (!inputUrl) return;
-    try {
-      extractIdsFromUrl(inputUrl); // 検証
-      const newMap: Map = {
-        id: '',
-        url: inputUrl,
-        beatmapId: '',
-        artist: '',
-        title: '',
-        difficulty: '',
-        difficultyRating: 0,
-        creator: '',
-        coverUrl: '',
-        category: selectedCategory,
-        number: selectedNumber,
-      };
-
-      // 同じカテゴリ・番号のマップがある場合は上書き
-      const existingIndex = maps.findIndex(
-        m => m.category === selectedCategory && m.number === selectedNumber
-      );
-
-      if (existingIndex >= 0) {
-        const newMaps = [...maps];
-        newMaps[existingIndex] = newMap;
-        setMaps(newMaps);
-      } else {
-        setMaps([...maps, newMap]);
-      }
-
-      setInputUrl('');
-    } catch {
-      setError('URLの形式が正しくありません');
-    }
-  };
-
   // カテゴリごとのマップを取得
   const getMapsByCategory = (category: Category) => {
     return maps
