@@ -9,39 +9,8 @@ interface TokenResponse {
   access_token: string;
 }
 
-interface RateLimitHeaders {
-  'x-ratelimit-remaining'?: string;
-  'x-ratelimit-reset'?: string;
-}
-
 let accessToken: string | null = null;
 let tokenExpiry: number | null = null;
-
-// レート制限の状態を管理
-const rateLimitState = {
-  remaining: 1000,
-  reset: Date.now() + 60000,
-};
-
-// レート制限のチェック
-function checkRateLimit() {
-  const now = Date.now();
-  if (now >= rateLimitState.reset) {
-    rateLimitState.remaining = 1000;
-    rateLimitState.reset = now + 60000;
-  }
-  return rateLimitState.remaining > 0;
-}
-
-// レート制限の更新
-function updateRateLimit(headers: RateLimitHeaders) {
-  if (headers['x-ratelimit-remaining']) {
-    rateLimitState.remaining = parseInt(headers['x-ratelimit-remaining']);
-  }
-  if (headers['x-ratelimit-reset']) {
-    rateLimitState.reset = parseInt(headers['x-ratelimit-reset']) * 1000;
-  }
-}
 
 export async function getAccessToken(): Promise<string> {
   if (accessToken && tokenExpiry && Date.now() < tokenExpiry) {
