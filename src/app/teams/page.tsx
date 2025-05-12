@@ -86,7 +86,7 @@ export default function TeamsPage() {
     };
     setPlayersLoaded(false);
     fetchAllPlayers();
-  }, [teams]);
+  }, [teams.length]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,19 +104,11 @@ export default function TeamsPage() {
 
   if (loading || !playersLoaded || isLoading) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-screen">
         <h1 className="text-2xl font-bold mb-4">Teams</h1>
-        <div className="space-y-8">
-          {[1, 2].map((i) => (
-            <div key={i} className="mb-8">
-              <div className="h-6 w-32 bg-gray-700 rounded mb-4 animate-pulse" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((j) => (
-                  <div key={j} className="bg-gray-800 rounded-lg p-4 shadow-lg animate-pulse h-32" />
-                ))}
-              </div>
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center">
+          <span className="text-white text-xl font-semibold mb-4 animate-pulse">Loading Now...</span>
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
