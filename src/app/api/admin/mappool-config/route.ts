@@ -2,13 +2,19 @@ import { NextResponse } from 'next/server';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 
+interface MapConfig {
+  category: string;
+  number: number;
+  url: string;
+}
+
 // mappoolConfigの更新
 export async function PUT(request: Request) {
   try {
-    const { maps } = await request.json();
+    const { maps } = await request.json() as { maps: MapConfig[] };
 
     // mappoolConfigの形式に変換
-    const mappoolConfig = maps.map((map: any) => ({
+    const mappoolConfig = maps.map((map) => ({
       mapNo: `${map.category}${map.number}`,
       url: map.url,
     }));
@@ -29,4 +35,4 @@ export const mappoolConfig = ${JSON.stringify(mappoolConfig, null, 2)};
     console.error('Failed to update mappool config:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}

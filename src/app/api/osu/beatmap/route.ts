@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAccessToken } from '@/lib/osuApi';
 
+interface ErrorResponse {
+  message: string;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const beatmapId = searchParams.get('beatmapId');
@@ -20,7 +24,8 @@ export async function GET(request: Request) {
       return NextResponse.json(data, { status: response.status });
     }
     return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-} 
+}

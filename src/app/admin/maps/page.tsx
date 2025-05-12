@@ -31,8 +31,8 @@ export default function MapsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inputUrl, setInputUrl] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category>('NM');
-  const [selectedNumber, setSelectedNumber] = useState<number>(1);
+  const [selectedCategory] = useState<Category>('NM');
+  const [selectedNumber] = useState<number>(1);
   const [editingIndex, setEditingIndex] = useState<string | null>(null);
   const [editingUrl, setEditingUrl] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -119,7 +119,7 @@ export default function MapsPage() {
       }
 
       setInputUrl('');
-    } catch (e) {
+    } catch {
       setError('URLの形式が正しくありません');
     }
   };
