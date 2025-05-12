@@ -42,7 +42,6 @@ const nextConfig = {
   },
   allowedDevOrigins: ['192.168.11.3'],
   // ビルド最適化設定
-  swcMinify: true, // SWCによる最適化を有効化
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // 本番環境でconsole.logを削除
   },

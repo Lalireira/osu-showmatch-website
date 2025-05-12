@@ -71,7 +71,7 @@ async function handler(request: Request) {
     // ユーザーデータは頻繁に更新される可能性があるためSHORTキャッシュを使用
     const headers = generateCacheHeaders('SHORT');
     const nextResponse = NextResponse.json(response.data, { headers });
-    return setCSRFToken(nextResponse);
+    return await setCSRFToken(nextResponse);
   } catch (error) {
     return handleAPIError(error);
   }

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes } from 'crypto';
 
 const CSRF_TOKEN_COOKIE = 'csrf_token';
 const CSRF_TOKEN_HEADER = 'x-csrf-token';
 
-export function generateCSRFToken(): string {
-  return randomBytes(32).toString('hex');
+export async function generateCSRFToken(): Promise<string> {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export function withCSRF(
@@ -35,8 +38,8 @@ export function withCSRF(
   };
 }
 
-export function setCSRFToken(response: NextResponse): NextResponse {
-  const token = generateCSRFToken();
+export async function setCSRFToken(response: NextResponse): Promise<NextResponse> {
+  const token = await generateCSRFToken();
   response.cookies.set(CSRF_TOKEN_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
