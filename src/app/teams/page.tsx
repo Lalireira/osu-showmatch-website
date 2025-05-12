@@ -57,10 +57,12 @@ export default function TeamsPage() {
     if (teams.length === 0) return;
     const fetchAllPlayers = async () => {
       setIsLoading(true);
-      const updatedTeams = [...teams];
+      // deep copy
+      const updatedTeams = JSON.parse(JSON.stringify(teams));
+      // すべてのユーザー情報をPromise.allで取得
       await Promise.all(
-        updatedTeams.flatMap(team =>
-          team.members.map(async (member) => {
+        updatedTeams.flatMap((team: Team) =>
+          team.members.map(async (member: Player) => {
             if (!member.username) {
               try {
                 const userId = extractUserIdFromUrl(member.url);
@@ -69,7 +71,7 @@ export default function TeamsPage() {
                 const data = await response.json();
                 member.username = data.username;
                 member.pp = data.pp;
-                member.rank = data.rank;
+                member.rank = data.statistics?.global_rank;
                 member.country = data.country;
                 member.countryRank = data.countryRank;
                 member.avatarUrl = data.avatarUrl;
@@ -80,6 +82,7 @@ export default function TeamsPage() {
           })
         )
       );
+      // すべて取得完了後に一斉にセット
       setTeams(updatedTeams);
       setPlayersLoaded(true);
       setIsLoading(false);
@@ -132,25 +135,34 @@ export default function TeamsPage() {
           .map((team) => (
             <div key={team.team} className="mb-8">
               <h2 className="text-2xl font-bold mb-4">{teamLabels.find(l => l.team === team.team)?.displayName || team.team}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {team.members
+              {/* 横方向にランキング順で3人ずつ表示 */}
+              {(() => {
+                const sortedMembers = team.members
                   .slice()
                   .sort((a, b) => {
                     if (a.rank === undefined && b.rank === undefined) return 0;
                     if (a.rank === undefined) return 1;
                     if (b.rank === undefined) return -1;
-                    return a.rank - b.rank; // rank昇順（ランキングが高い順）
-                  })
-                  .map((member, idx) => (
-                    <PlayerCard
-                      key={member.userNo}
-                      userId={extractUserIdFromUrl(member.url)}
-                      username={member.username || member.userNo}
-                      url={member.url}
-                      index={idx}
-                    />
-                  ))}
-              </div>
+                    return a.rank - b.rank;
+                  });
+                const rows = [];
+                for (let i = 0; i < sortedMembers.length; i += 3) {
+                  rows.push(sortedMembers.slice(i, i + 3));
+                }
+                return rows.map((row, rowIdx) => (
+                  <div key={rowIdx} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    {row.map((member, idx) => (
+                      <PlayerCard
+                        key={member.userNo}
+                        userId={extractUserIdFromUrl(member.url)}
+                        username={member.username || member.userNo}
+                        url={member.url}
+                        index={rowIdx * 3 + idx}
+                      />
+                    ))}
+                  </div>
+                ));
+              })()}
             </div>
           ))}
       </div>
