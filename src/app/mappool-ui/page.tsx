@@ -49,7 +49,20 @@ function groupByCategory(mappoolConfig: MapConfig[]) {
   return groups;
 }
 
-// テーブルセルのカテゴリごとのスタイルマップ
+// テーブルセルのスタイル設定
+const tableCellStyles = {
+  default: 'px-3 py-2 border-b border-[#222]',
+  header: 'px-3 py-2 font-bold text-white uppercase tracking-wider',
+  mapNo: 'px-3 py-2 font-bold border-b border-[#222] text-center',
+  title: 'px-3 py-2 font-medium border-b border-[#222] max-w-xs break-words',
+  mapper: 'px-3 py-2 font-medium border-b border-[#222] break-words',
+  id: 'px-3 py-2 font-medium border-b border-[#222]',
+  length: 'px-3 py-2 font-medium border-b border-[#222]',
+  stats: 'px-3 py-2 font-medium border-b border-[#222]',
+  link: 'hover:text-[#ff66aa] transition-colors duration-200'
+};
+
+// カテゴリごとのスタイルマップ
 const categoryStyles: Record<string, { bg: string, text: string, header: string, titleBg: string }> = {
   NM: {
     bg: 'bg-[#1a1a22]',
@@ -231,18 +244,18 @@ export default function MappoolTable() {
                       </colgroup>
                       <thead className={`${categoryStyles[category].header} text-white uppercase tracking-wider`}>
                         <tr>
-                          <th className="px-3 py-2 font-bold">MapNo</th>
-                          <th className="px-3 py-2 font-bold">Banner</th>
-                          <th className="px-3 py-2 font-bold">Artist - Title [Diff]</th>
-                          <th className="px-3 py-2 font-bold">Mapper</th>
-                          <th className="px-3 py-2 font-bold">ID</th>
-                          <th className="px-3 py-2 font-bold">Length</th>
-                          <th className="px-3 py-2 font-bold">SR</th>
-                          <th className="px-3 py-2 font-bold">BPM</th>
-                          <th className="px-3 py-2 font-bold">CS</th>
-                          <th className="px-3 py-2 font-bold">AR</th>
-                          <th className="px-3 py-2 font-bold">OD</th>
-                          <th className="px-3 py-2 font-bold">HP</th>
+                          <th className={tableCellStyles.header}>MapNo</th>
+                          <th className={tableCellStyles.header}>Banner</th>
+                          <th className={tableCellStyles.header}>Artist - Title [Diff]</th>
+                          <th className={tableCellStyles.header}>Mapper</th>
+                          <th className={tableCellStyles.header}>ID</th>
+                          <th className={tableCellStyles.header}>Length</th>
+                          <th className={tableCellStyles.header}>SR</th>
+                          <th className={tableCellStyles.header}>BPM</th>
+                          <th className={tableCellStyles.header}>CS</th>
+                          <th className={tableCellStyles.header}>AR</th>
+                          <th className={tableCellStyles.header}>OD</th>
+                          <th className={tableCellStyles.header}>HP</th>
                         </tr>
                       </thead>
                       <tbody className="overflow-visible">
@@ -268,8 +281,8 @@ export default function MappoolTable() {
                                 height: '30px'
                               }}
                             >
-                              <td className="px-3 py-2 font-semibold border-b border-[#222] text-center">{map.mapNo}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">
+                              <td className={tableCellStyles.mapNo}>{map.mapNo}</td>
+                              <td className={tableCellStyles.default}>
                                 <div className="relative w-16 h-8 hover:scale-110 transition-transform duration-200">
                                   <Image
                                     src={`https://assets.ppy.sh/beatmaps/${beatmap?.beatmapset_id}/covers/card.jpg`}
@@ -280,27 +293,27 @@ export default function MappoolTable() {
                                   />
                                 </div>
                               </td>
-                              <td className="px-3 py-2 font-medium border-b border-[#222] max-w-xs break-words">
+                              <td className={tableCellStyles.title}>
                                 <a
                                   href={map.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="hover:text-[#ff66aa] transition-colors duration-200"
+                                  className={tableCellStyles.link}
                                 >
                                   {beatmap?.artist} - {beatmap?.title} <span className="text-gray-400">[{beatmap?.version}]</span>
                                 </a>
                               </td>
-                              <td className="px-3 py-2 border-b border-[#222] break-words">{beatmap?.creator}</td>
-                              <td className="px-3 py-2 font-mono text-xs border-b border-[#222]">{beatmap?.id}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">
+                              <td className={tableCellStyles.mapper}>{beatmap?.creator}</td>
+                              <td className={tableCellStyles.id}>{beatmap?.id}</td>
+                              <td className={tableCellStyles.length}>
                                 {beatmap ? `${Math.floor(beatmap.total_length / 60)}:${String(beatmap.total_length % 60).padStart(2, '0')}` : ''}
                               </td>
-                              <td className="px-3 py-2 font-semibold border-b border-[#222]">{beatmap?.difficulty_rating?.toFixed(2)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap ? Math.round(beatmap.bpm) : ''}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.cs?.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.ar?.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.accuracy?.toFixed(1)}</td>
-                              <td className="px-3 py-2 border-b border-[#222]">{beatmap?.drain?.toFixed(1)}</td>
+                              <td className={tableCellStyles.stats}>{beatmap?.difficulty_rating?.toFixed(2)}</td>
+                              <td className={tableCellStyles.stats}>{beatmap ? Math.round(beatmap.bpm) : ''}</td>
+                              <td className={tableCellStyles.stats}>{beatmap?.cs?.toFixed(1)}</td>
+                              <td className={tableCellStyles.stats}>{beatmap?.ar?.toFixed(1)}</td>
+                              <td className={tableCellStyles.stats}>{beatmap?.accuracy?.toFixed(1)}</td>
+                              <td className={tableCellStyles.stats}>{beatmap?.drain?.toFixed(1)}</td>
                             </tr>
                           );
                         })}
