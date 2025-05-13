@@ -122,7 +122,6 @@ export default function MappoolTable() {
     async function fetchBeatmaps() {
       if (maps.length === 0) return;
       setIsLoading(true);
-      const results: Beatmap[] = [];
       const promises = maps.map(async (map) => {
         try {
           const { beatmap_id } = extractIdsFromUrl(map.url);
