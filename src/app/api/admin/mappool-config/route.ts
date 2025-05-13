@@ -27,7 +27,7 @@ export async function PUT(request: Request) {
     }));
 
     // 2. 既存データをフラット化（id, mapNo, url）
-    const flatBefore = before.map((m: any) => ({
+    const flatBefore = before.map((m: { id: number; mapNo: string; url: string }) => ({
       id: m.id,
       mapNo: m.mapNo,
       url: m.url,
@@ -35,7 +35,7 @@ export async function PUT(request: Request) {
 
     // 3. 削除対象（新データに存在しないもの）
     for (const oldMap of flatBefore) {
-      if (!flatNew.find((n: any) => n.mapNo === oldMap.mapNo)) {
+      if (!flatNew.find((n: { mapNo: string; url: string }) => n.mapNo === oldMap.mapNo)) {
         await db.delete(mappool).where(
           eq(mappool.mapNo, oldMap.mapNo)
         );
@@ -44,7 +44,7 @@ export async function PUT(request: Request) {
 
     // 4. 追加・更新対象
     for (const newMap of flatNew) {
-      const old = flatBefore.find((o: any) => o.mapNo === newMap.mapNo);
+      const old = flatBefore.find((o) => o.mapNo === newMap.mapNo);
       if (!old) {
         // 新規追加
         await db.insert(mappool).values({

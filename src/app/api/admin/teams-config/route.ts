@@ -46,7 +46,7 @@ export async function PUT(request: Request) {
     );
 
     // 2. 既存データをフラット化（id, team, userNo, url）
-    const flatBefore = before.map((m: any) => ({
+    const flatBefore = before.map((m: { id: number; team: string; userNo: string; url: string }) => ({
       id: m.id,
       team: m.team,
       userNo: m.userNo,
@@ -55,7 +55,7 @@ export async function PUT(request: Request) {
 
     // 3. 削除対象（新データに存在しないもの）
     for (const oldMember of flatBefore) {
-      if (!flatNew.find((n: any) => n.team === oldMember.team && n.userNo === oldMember.userNo)) {
+      if (!flatNew.find((n: { team: string; userNo: string; url: string }) => n.team === oldMember.team && n.userNo === oldMember.userNo)) {
         await db.delete(teams).where(
           and(eq(teams.team, oldMember.team), eq(teams.userNo, oldMember.userNo))
         );
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
 
     // 4. 追加・更新対象
     for (const newMember of flatNew) {
-      const old = flatBefore.find((o: any) => o.team === newMember.team && o.userNo === newMember.userNo);
+      const old = flatBefore.find((o: { id: number; team: string; userNo: string; url: string }) => o.team === newMember.team && o.userNo === newMember.userNo);
       if (!old) {
         // 新規追加
         await db.insert(teams).values({
