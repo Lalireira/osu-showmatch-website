@@ -59,7 +59,7 @@ const tableCellStyles = {
   id: 'px-3 py-2 font-medium border-b border-[#222]',
   length: 'px-3 py-2 font-medium border-b border-[#222]',
   stats: 'px-3 py-2 font-medium border-b border-[#222]',
-  link: 'hover:text-[#ff66aa] transition-colors duration-200'
+  link: 'hover:text-[#79b0ea] transition-colors duration-200'
 };
 
 // カテゴリごとのスタイルマップ
