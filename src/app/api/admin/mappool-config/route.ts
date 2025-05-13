@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    const mappoolData = await db.select().from(mappool);
+    const mappoolData = await db.select().from(mappool).orderBy(mappool.mapNo);
     return NextResponse.json(mappoolData);
   } catch (error) {
     console.error('Failed to fetch mappool config:', error);

@@ -195,7 +195,9 @@ export default function MappoolTable() {
     });
   }, [beatmaps]);
 
-  const grouped = groupByCategory(maps);
+  // 並び順を保証するためにmapNoでソート
+  const sortedMaps = [...maps].sort((a, b) => a.mapNo.localeCompare(b.mapNo, undefined, { numeric: true }));
+  const grouped = groupByCategory(sortedMaps);
   const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
 
   return (

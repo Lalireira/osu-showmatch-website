@@ -5,7 +5,7 @@ import { eq, and } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    const teamsData = await db.select().from(teams);
+    const teamsData = await db.select().from(teams).orderBy(teams.team, teams.userNo);
 
     // データをチームごとにグループ化
     const groupedTeams = teamsData.reduce((acc, curr) => {
