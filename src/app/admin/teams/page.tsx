@@ -185,7 +185,7 @@ export default function AdminTeamsPage() {
                               style={{ minWidth: 200 }}
                             />
                             <button
-                              onClick={async () => {
+                              onClick={() => {
                                 const newTeams = teams.map(t =>
                                   t.team === team.team
                                     ? {
@@ -199,7 +199,6 @@ export default function AdminTeamsPage() {
                                 setTeams(newTeams);
                                 setEditingIndex(null);
                                 setEditingUrl('');
-                                await handleTeamsUpdate(newTeams);
                               }}
                               className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
                             >保存</button>
