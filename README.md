@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # osu! Showmatch Website
 
 ## サイト概要
@@ -249,3 +250,6 @@ osu-showmatch-website/
    - `components/ui/skeleton.tsx`: ローディング最適化
 
 ---
+=======
+ラー↓メン
+>>>>>>> 60d4eed754a67038fe612b60c0f830477ba6d811
