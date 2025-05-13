@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { teams } from '@/lib/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -34,44 +35,48 @@ export async function PUT(request: Request) {
 
     // 既存データを取得
     const before = await db.select().from(teams);
-    // 変更内容を比較してログ出力
-    console.log('--- teams 更新リクエスト ---');
-    console.log('Before:', before);
-    console.log('After:', newTeams);
-    before.forEach((oldMember: { team: string; userNo: string; url: string }) => {
-      const newTeam = newTeams.find((t: { team: string; members: { userNo: string; url: string }[] }) => t.team === oldMember.team);
-      const newMember = newTeam?.members.find((m: { userNo: string; url: string }) => m.userNo === oldMember.userNo);
-      if (newMember && newMember.url !== oldMember.url) {
-        console.log(`team ${oldMember.team} userNo ${oldMember.userNo}: URL changed from ${oldMember.url} to ${newMember.url}`);
-      }
-    });
-    newTeams.forEach((newTeam: { team: string; members: { userNo: string; url: string }[] }) => {
-      newTeam.members.forEach((newMember: { userNo: string; url: string }) => {
-        const oldMember = before.find((m: { team: string; userNo: string; url: string }) => m.team === newTeam.team && m.userNo === newMember.userNo);
-        if (!oldMember) {
-          console.log(`team ${newTeam.team} userNo ${newMember.userNo}: 新規追加 (URL: ${newMember.url})`);
-        }
-      });
-    });
-    before.forEach((oldMember: { team: string; userNo: string; url: string }) => {
-      const newTeam = newTeams.find((t: { team: string; members: { userNo: string; url: string }[] }) => t.team === oldMember.team);
-      const newMember = newTeam?.members.find((m: { userNo: string; url: string }) => m.userNo === oldMember.userNo);
-      if (!newMember) {
-        console.log(`team ${oldMember.team} userNo ${oldMember.userNo}: 削除されました (元URL: ${oldMember.url})`);
-      }
-    });
 
-    // 既存のデータを削除
-    await db.delete(teams);
+    // 1. 新データをフラット化（team, userNo, url）
+    const flatNew = newTeams.flatMap((t: { team: string; members: { userNo: string; url: string }[] }) =>
+      t.members.map((m: { userNo: string; url: string }) => ({
+        team: t.team,
+        userNo: m.userNo,
+        url: m.url,
+      }))
+    );
 
-    // 新しいデータを挿入
-    for (const team of newTeams) {
-      for (const member of team.members) {
+    // 2. 既存データをフラット化（id, team, userNo, url）
+    const flatBefore = before.map((m: any) => ({
+      id: m.id,
+      team: m.team,
+      userNo: m.userNo,
+      url: m.url,
+    }));
+
+    // 3. 削除対象（新データに存在しないもの）
+    for (const oldMember of flatBefore) {
+      if (!flatNew.find((n: any) => n.team === oldMember.team && n.userNo === oldMember.userNo)) {
+        await db.delete(teams).where(
+          and(eq(teams.team, oldMember.team), eq(teams.userNo, oldMember.userNo))
+        );
+      }
+    }
+
+    // 4. 追加・更新対象
+    for (const newMember of flatNew) {
+      const old = flatBefore.find((o: any) => o.team === newMember.team && o.userNo === newMember.userNo);
+      if (!old) {
+        // 新規追加
         await db.insert(teams).values({
-          team: team.team,
-          userNo: member.userNo,
-          url: member.url
+          team: newMember.team,
+          userNo: newMember.userNo,
+          url: newMember.url,
         });
+      } else if (old.url !== newMember.url) {
+        // URLが違う場合は更新
+        await db.update(teams)
+          .set({ url: newMember.url })
+          .where(and(eq(teams.team, newMember.team), eq(teams.userNo, newMember.userNo)));
       }
     }
 

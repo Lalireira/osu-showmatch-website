@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { mappool } from '@/lib/schema';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -19,39 +20,43 @@ export async function PUT(request: Request) {
     // 既存データを取得
     const before = await db.select().from(mappool);
 
-    // 変更内容を比較してログ出力
-    console.log('--- mappool 更新リクエスト ---');
-    console.log('Before:', before);
-    console.log('After:', maps);
-    before.forEach((oldMap: { mapNo: string; url: string }) => {
-      const newMap = maps.find((m: { mapNo: string; url: string }) => m.mapNo === oldMap.mapNo);
-      if (newMap && newMap.url !== oldMap.url) {
-        console.log(`mapNo ${oldMap.mapNo}: URL changed from ${oldMap.url} to ${newMap.url}`);
-      }
-    });
-    maps.forEach((newMap: { mapNo: string; url: string }) => {
-      const oldMap = before.find((m: { mapNo: string; url: string }) => m.mapNo === newMap.mapNo);
-      if (!oldMap) {
-        console.log(`mapNo ${newMap.mapNo}: 新規追加 (URL: ${newMap.url})`);
-      }
-    });
-    before.forEach((oldMap: { mapNo: string; url: string }) => {
-      const newMap = maps.find((m: { mapNo: string; url: string }) => m.mapNo === oldMap.mapNo);
-      if (!newMap) {
-        console.log(`mapNo ${oldMap.mapNo}: 削除されました (元URL: ${oldMap.url})`);
-      }
-    });
+    // 1. 新データをフラット化（mapNo, url）
+    const flatNew = maps.map((m: { mapNo: string; url: string }) => ({
+      mapNo: m.mapNo,
+      url: m.url,
+    }));
 
-    // 既存のデータを削除
-    await db.delete(mappool);
+    // 2. 既存データをフラット化（id, mapNo, url）
+    const flatBefore = before.map((m: any) => ({
+      id: m.id,
+      mapNo: m.mapNo,
+      url: m.url,
+    }));
 
-    // 新しいデータを挿入
-    for (const map of maps) {
-      if (!map.mapNo) continue;
-      await db.insert(mappool).values({
-        mapNo: map.mapNo,
-        url: map.url
-      });
+    // 3. 削除対象（新データに存在しないもの）
+    for (const oldMap of flatBefore) {
+      if (!flatNew.find((n: any) => n.mapNo === oldMap.mapNo)) {
+        await db.delete(mappool).where(
+          eq(mappool.mapNo, oldMap.mapNo)
+        );
+      }
+    }
+
+    // 4. 追加・更新対象
+    for (const newMap of flatNew) {
+      const old = flatBefore.find((o: any) => o.mapNo === newMap.mapNo);
+      if (!old) {
+        // 新規追加
+        await db.insert(mappool).values({
+          mapNo: newMap.mapNo,
+          url: newMap.url,
+        });
+      } else if (old.url !== newMap.url) {
+        // URLが違う場合は更新
+        await db.update(mappool)
+          .set({ url: newMap.url })
+          .where(eq(mappool.mapNo, newMap.mapNo));
+      }
     }
 
     return NextResponse.json({ success: true });
