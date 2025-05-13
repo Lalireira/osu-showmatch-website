@@ -51,14 +51,14 @@ function groupByCategory(mappoolConfig: MapConfig[]) {
 
 // テーブルセルのスタイル設定
 const tableCellStyles = {
-  default: 'px-3 py-2 border-b border-[#222]',
-  header: 'px-3 py-2 font-bold text-white uppercase tracking-wider',
-  mapNo: 'px-3 py-2 font-bold border-b border-[#222] text-center',
-  title: 'px-3 py-2 font-medium border-b border-[#222] max-w-xs break-words',
-  mapper: 'px-3 py-2 font-medium border-b border-[#222] break-words',
-  id: 'px-3 py-2 font-medium border-b border-[#222]',
-  length: 'px-3 py-2 font-medium border-b border-[#222]',
-  stats: 'px-3 py-2 font-medium border-b border-[#222]',
+  default: 'px-3 py-2',
+  header: 'px-3 py-2 font-bold text-white uppercase tracking-wider text-base',
+  mapNo: 'px-3 py-2 font-bold text-center text-base',
+  title: 'px-3 py-2 font-medium max-w-xs break-words text-base',
+  mapper: 'px-3 py-2 font-medium break-words text-base',
+  id: 'px-3 py-2 font-medium text-base',
+  length: 'px-3 py-2 font-medium text-base',
+  stats: 'px-3 py-2 font-medium text-base',
   link: 'hover:text-[#79b0ea] transition-colors duration-200'
 };
 
@@ -106,6 +106,7 @@ export default function MappoolTable() {
   const [maps, setMaps] = useState<MapConfig[]>([]);
   const [beatmaps, setBeatmaps] = useState<Beatmap[]>([]);
   const [visible, setVisible] = useState<boolean[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchMaps() {
@@ -120,8 +121,9 @@ export default function MappoolTable() {
   useEffect(() => {
     async function fetchBeatmaps() {
       if (maps.length === 0) return;
+      setIsLoading(true);
       const results: Beatmap[] = [];
-      for (const map of maps) {
+      const promises = maps.map(async (map) => {
         try {
           const { beatmap_id } = extractIdsFromUrl(map.url);
           const beatmapId = beatmap_id.toString();
@@ -130,7 +132,7 @@ export default function MappoolTable() {
             throw new Error('Failed to fetch beatmap data');
           }
           const data = await response.json();
-          const formattedData: Beatmap = {
+          return {
             id: data.id,
             beatmapset_id: data.beatmapset_id,
             version: data.version,
@@ -150,11 +152,10 @@ export default function MappoolTable() {
               creator: data.beatmapset?.creator || data.creator
             }
           };
-          results.push(formattedData);
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
           const { beatmap_id, beatmapset_id } = extractIdsFromUrl(map.url);
-          results.push({
+          return {
             id: beatmap_id,
             beatmapset_id: beatmapset_id,
             version: 'Error',
@@ -173,27 +174,42 @@ export default function MappoolTable() {
               title: '',
               creator: ''
             }
-          });
+          };
         }
-      }
-      setBeatmaps(results);
-      setVisible(Array(results.length).fill(false));
+      });
+
+      const beatmapResults = await Promise.all(promises);
+      setBeatmaps(beatmapResults);
+      setVisible(Array(beatmapResults.length).fill(false));
+      setIsLoading(false);
     }
     fetchBeatmaps();
   }, [maps]);
 
   useEffect(() => {
-    if (beatmaps.length === 0) return;
-    beatmaps.forEach((_, idx) => {
-      setTimeout(() => {
-        setVisible(v => {
-          const next = [...v];
-          next[idx] = true;
-          return next;
-        });
-      }, idx * 100);
+    if (beatmaps.length === 0 || isLoading) return;
+
+    // カテゴリごとにグループ化
+    const grouped = groupByCategory(maps);
+    const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
+
+    // 各カテゴリ内のマップを順番に表示
+    let currentIndex = 0;
+    categoryOrder.forEach((category) => {
+      const mapsInCategory = grouped[category] || [];
+      mapsInCategory.forEach((map) => {
+        const mapIndex = maps.findIndex(m => m.mapNo === map.mapNo);
+        setTimeout(() => {
+          setVisible(v => {
+            const next = [...v];
+            next[mapIndex] = true;
+            return next;
+          });
+        }, currentIndex * 100);
+        currentIndex++;
+      });
     });
-  }, [beatmaps]);
+  }, [beatmaps, isLoading, maps]);
 
   // 並び順を保証するためにmapNoでソート
   const sortedMaps = [...maps].sort((a, b) => a.mapNo.localeCompare(b.mapNo, undefined, { numeric: true }));
