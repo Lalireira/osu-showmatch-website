@@ -111,14 +111,13 @@ export default function AdminMapsPage() {
                             style={{ minWidth: 200 }}
                           />
                           <button
-                            onClick={async () => {
+                            onClick={() => {
                               const newMaps = maps.map(m =>
                                 m.id === map.id ? { ...m, url: editingUrl, mapNo: m.mapNo } : m
                               );
                               setMaps(newMaps);
                               setEditingIndex(null);
                               setEditingUrl('');
-                              await handleMapsUpdate(newMaps);
                             }}
                             className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 font-semibold"
                           >保存</button>
