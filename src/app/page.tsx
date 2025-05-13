@@ -102,7 +102,7 @@ export default function Home() {
                   <p className="text-gray-300 mt-2 font-normal">またその他運営が違反と判断した場合はこの限りではない。</p>
                   <div className="my-4"></div>
                   <p className="text-[#888888] font-light text-sm">Match interference, abusive language, and intentional delays are prohibited.</p>
-                  <p className="text-[#888888] mt-2 font-light text-sm">Other actions may be considered violations at the staff's discretion.</p>
+                  <p className="text-[#888888] mt-2 font-light text-sm">Other actions may be considered violations at the staff&apos;s discretion.</p>
                 </div>
               </div>
 
