@@ -54,10 +54,10 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2 text-white">2. 試合形式 / Match Format</h3>
                 <div className="my-4 border-t border-gray-600"></div>
                 <div className="pl-4">
-                  <p className="text-gray-300 font-normal">TeamSizeは6人、試合は「TeamVS」を使用、スコアは「ScoreV2」を使用した4vs4、7本先取(BO13)</p>
+                  <p className="text-gray-300 font-normal">TeamSizeは6人、試合は&quot;TeamVS&quot;を使用、スコアは&quot;ScoreV2&quot;を使用した4vs4、7本先取(BO13)</p>
                   <p className="text-gray-300 mt-2 font-normal">TBは特別ルールとしての6vs6での勝負とする。</p>
                   <div className="my-4"></div>
-                  <p className="text-[#888888] font-light text-sm">TeamSize is 6 players, using "TeamVS" format, "ScoreV2" scoring system, 4v4, Best of 13 (First to 7)</p>
+                  <p className="text-[#888888] font-light text-sm">TeamSize is 6 players, using &quot;TeamVS&quot; format, &quot;ScoreV2&quot; scoring system, 4v4, Best of 13 (First to 7)</p>
                   <p className="text-[#888888] mt-2 font-light text-sm">Tiebreaker will be played as a special 6v6 match.</p>
                 </div>
               </div>
@@ -66,11 +66,11 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2 text-white">3. 試合運営 / Match Management</h3>
                 <div className="my-4 border-t border-gray-600"></div>
                 <div className="pl-4">
-                  <p className="text-gray-300 font-normal">「!roll」を使用して順番を決定。順次ピックを実施。</p>
+                  <p className="text-gray-300 font-normal">&quot;!roll&quot;を使用して順番を決定。順次ピックを実施。</p>
                   <p className="text-gray-300 mt-2 font-normal">今回のショーマッチにてMAP BANは無し。</p>
                   <p className="text-gray-300 mt-2 font-normal">出場回数に制限あり。各プレイヤーは事前に出場する譜面を決め、12譜面の登録が必要。</p>
                   <div className="my-4"></div>
-                  <p className="text-[#888888] font-light text-sm">Order will be determined using "!roll". Sequential pick will be implemented.</p>
+                  <p className="text-[#888888] font-light text-sm">Order will be determined using &quot;!roll&quot;. Sequential pick will be implemented.</p>
                   <p className="text-[#888888] mt-2 font-light text-sm">There will be no MAP BAN in this showmatch.</p>
                   <p className="text-[#888888] mt-2 font-light text-sm">There is a limit on participation. Each player must pre-register 12 maps they will play.</p>
                 </div>
