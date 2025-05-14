@@ -1,8 +1,8 @@
 "use client";
 
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { extractIdsFromUrl } from '@/lib/utils';
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { extractIdsFromUrl } from "@/lib/utils";
 
 interface MapConfig {
   id: number;
@@ -32,15 +32,15 @@ interface Beatmap {
 }
 
 // カテゴリごとにグループ化
-function groupByCategory(mappoolConfig: MapConfig[]) {
+function groupByCategory(maps: MapConfig[]) {
   const groups: Record<string, MapConfig[]> = {};
-  for (const map of mappoolConfig) {
+  for (const map of maps) {
     // カテゴリ名を抽出（数字を除去）
-    const category = map.mapNo.replace(/\d+$/, '');
+    const category = map.mapNo.replace(/\d+$/, "");
     // TBの場合は特別処理
-    if (map.mapNo === 'TB') {
-      if (!groups['TB']) groups['TB'] = [];
-      groups['TB'].push(map);
+    if (map.mapNo === "TB") {
+      if (!groups["TB"]) groups["TB"] = [];
+      groups["TB"].push(map);
     } else {
       if (!groups[category]) groups[category] = [];
       groups[category].push(map);
@@ -51,54 +51,57 @@ function groupByCategory(mappoolConfig: MapConfig[]) {
 
 // テーブルセルのスタイル設定
 const tableCellStyles = {
-  default: 'px-3 py-2',
-  header: 'px-3 py-2 font-bold text-white uppercase tracking-wider text-base',
-  mapNo: 'px-3 py-2 font-bold text-center text-base',
-  title: 'px-3 py-2 font-medium max-w-xs break-words text-base',
-  mapper: 'px-3 py-2 font-medium break-words text-base',
-  id: 'px-3 py-2 font-medium text-base',
-  length: 'px-3 py-2 font-medium text-base',
-  stats: 'px-3 py-2 font-medium text-base',
-  link: 'hover:text-[#79b0ea] transition-colors duration-200'
+  default: "px-3 py-2",
+  header: "px-3 py-2 font-bold text-white uppercase tracking-wider text-base",
+  mapNo: "px-3 py-2 font-bold text-center text-base",
+  title: "px-3 py-2 font-medium max-w-xs break-words text-base",
+  mapper: "px-3 py-2 font-medium break-words text-base",
+  id: "px-3 py-2 font-medium text-base",
+  length: "px-3 py-2 font-medium text-base",
+  stats: "px-3 py-2 font-medium text-base",
+  link: "hover:text-[#79b0ea] transition-colors duration-200",
 };
 
 // カテゴリごとのスタイルマップ
-const categoryStyles: Record<string, { bg: string, text: string, header: string, titleBg: string }> = {
+const categoryStyles: Record<
+  string,
+  { bg: string; text: string; header: string; titleBg: string }
+> = {
   NM: {
-    bg: 'bg-[#1a1a22]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#222228]',
-    titleBg: 'bg-[#15151d]'
+    bg: "bg-[#1a1a22]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#222228]",
+    titleBg: "bg-[#15151d]",
   },
   HD: {
-    bg: 'bg-[#22220e]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#2a2a14]',
-    titleBg: 'bg-[#1a1a08]'
+    bg: "bg-[#22220e]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#2a2a14]",
+    titleBg: "bg-[#1a1a08]",
   },
   HR: {
-    bg: 'bg-[#220e0e]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#2a1414]',
-    titleBg: 'bg-[#1a0808]'
+    bg: "bg-[#220e0e]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#2a1414]",
+    titleBg: "bg-[#1a0808]",
   },
   DT: {
-    bg: 'bg-[#1a0e22]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#22142a]',
-    titleBg: 'bg-[#15081a]'
+    bg: "bg-[#1a0e22]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#22142a]",
+    titleBg: "bg-[#15081a]",
   },
   FM: {
-    bg: 'bg-[#0e220e]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#142a14]',
-    titleBg: 'bg-[#081a08]'
+    bg: "bg-[#0e220e]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#142a14]",
+    titleBg: "bg-[#081a08]",
   },
   TB: {
-    bg: 'bg-[#1a1a22]',
-    text: 'text-[#f0f0f0]',
-    header: 'bg-[#222228]',
-    titleBg: 'bg-[#15151d]'
+    bg: "bg-[#1a1a22]",
+    text: "text-[#f0f0f0]",
+    header: "bg-[#222228]",
+    titleBg: "bg-[#15151d]",
   },
 };
 
@@ -110,7 +113,7 @@ export default function MappoolTable() {
 
   useEffect(() => {
     async function fetchMaps() {
-      const response = await fetch('/api/admin/mappool-config');
+      const response = await fetch("/api/admin/mappool-config");
       if (!response.ok) return;
       const data = await response.json();
       setMaps(data);
@@ -128,7 +131,7 @@ export default function MappoolTable() {
           const beatmapId = beatmap_id.toString();
           const response = await fetch(`/api/osu/beatmap/${beatmapId}`);
           if (!response.ok) {
-            throw new Error('Failed to fetch beatmap data');
+            throw new Error("Failed to fetch beatmap data");
           }
           const data = await response.json();
           return {
@@ -148,8 +151,8 @@ export default function MappoolTable() {
             beatmapset: {
               artist: data.beatmapset?.artist || data.artist,
               title: data.beatmapset?.title || data.title,
-              creator: data.beatmapset?.creator || data.creator
-            }
+              creator: data.beatmapset?.creator || data.creator,
+            },
           };
         } catch (e) {
           console.error(`Error fetching beatmap data for ${map.url}:`, e);
@@ -157,7 +160,7 @@ export default function MappoolTable() {
           return {
             id: beatmap_id,
             beatmapset_id: beatmapset_id,
-            version: 'Error',
+            version: "Error",
             total_length: 0,
             difficulty_rating: 0,
             bpm: 0,
@@ -165,14 +168,14 @@ export default function MappoolTable() {
             ar: 0,
             accuracy: 0,
             drain: 0,
-            artist: '',
-            title: '',
-            creator: '',
+            artist: "",
+            title: "",
+            creator: "",
             beatmapset: {
-              artist: '',
-              title: '',
-              creator: ''
-            }
+              artist: "",
+              title: "",
+              creator: "",
+            },
           };
         }
       });
@@ -190,16 +193,16 @@ export default function MappoolTable() {
 
     // カテゴリごとにグループ化
     const grouped = groupByCategory(maps);
-    const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
+    const categoryOrder = ["NM", "HD", "HR", "DT", "FM", "TB"];
 
     // 各カテゴリ内のマップを順番に表示
     let currentIndex = 0;
     categoryOrder.forEach((category) => {
       const mapsInCategory = grouped[category] || [];
       mapsInCategory.forEach((map) => {
-        const mapIndex = maps.findIndex(m => m.mapNo === map.mapNo);
+        const mapIndex = maps.findIndex((m) => m.mapNo === map.mapNo);
         setTimeout(() => {
-          setVisible(v => {
+          setVisible((v) => {
             const next = [...v];
             next[mapIndex] = true;
             return next;
@@ -211,59 +214,76 @@ export default function MappoolTable() {
   }, [beatmaps, isLoading, maps]);
 
   // 並び順を保証するためにmapNoでソート
-  const sortedMaps = [...maps].sort((a, b) => a.mapNo.localeCompare(b.mapNo, undefined, { numeric: true }));
+  const sortedMaps = [...maps].sort((a, b) =>
+    a.mapNo.localeCompare(b.mapNo, undefined, { numeric: true })
+  );
   const grouped = groupByCategory(sortedMaps);
-  const categoryOrder = ['NM', 'HD', 'HR', 'DT', 'FM', 'TB'];
+  const categoryOrder = ["NM", "HD", "HR", "DT", "FM", "TB"];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#030408] to-[#050810] font-sans overflow-hidden">
       <div className="container mx-auto px-4 py-10">
-        <h1 className="text-5xl font-extrabold mb-10 text-center text-white animate-fade-in-down tracking-wider" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
+        <h1
+          className="text-5xl font-extrabold mb-10 text-center text-white animate-fade-in-down tracking-wider"
+          style={{ textShadow: "0 0 10px rgba(255,255,255,0.3)" }}
+        >
           Mappool
         </h1>
         <div className="space-y-8">
           {categoryOrder.map((category, catIdx) => {
             const mapsInCategory = grouped[category];
             if (!mapsInCategory) return null;
-            const globalIndices = mapsInCategory.map(map => maps.findIndex(m => m.mapNo === map.mapNo));
-            const anyVisible = globalIndices.some(idx => visible[idx]);
+            const globalIndices = mapsInCategory.map((map) =>
+              maps.findIndex((m) => m.mapNo === map.mapNo)
+            );
+            const anyVisible = globalIndices.some((idx) => visible[idx]);
             return (
               <div
                 key={category}
                 className="animate-fade-in-down rounded-xl overflow-hidden shadow-2xl"
                 style={{
                   animationDelay: `${catIdx * 150}ms`,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                  background: 'rgba(10, 10, 15, 0.7)'
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+                  background: "rgba(10, 10, 15, 0.7)",
                 }}
               >
-                <h2 className={`text-2xl font-bold p-4 text-white ${categoryStyles[category].titleBg}`}>{category}</h2>
+                <h2
+                  className={`text-2xl font-bold p-4 text-white ${categoryStyles[category].titleBg}`}
+                >
+                  {category}
+                </h2>
                 <div className="overflow-x-hidden overflow-y-hidden min-h-[60px]">
                   {!anyVisible ? (
                     <div className="flex items-center justify-center h-20">
-                      <span className="text-white text-lg animate-pulse">loading...</span>
+                      <span className="text-white text-lg animate-pulse">
+                        loading...
+                      </span>
                     </div>
                   ) : (
                     <table className="min-w-full text-sm text-left">
                       <colgroup>
-                        <col style={{ width: '5%' }} />
-                        <col style={{ width: '6%' }} />
-                        <col style={{ width: '28%' }} />
-                        <col style={{ width: '10%' }} />
-                        <col style={{ width: '8%' }} />
-                        <col style={{ width: '7%' }} />
-                        <col style={{ width: '5%' }} />
-                        <col style={{ width: '5%' }} />
-                        <col style={{ width: '4%' }} />
-                        <col style={{ width: '4%' }} />
-                        <col style={{ width: '4%' }} />
-                        <col style={{ width: '4%' }} />
+                        <col style={{ width: "5%" }} />
+                        <col style={{ width: "6%" }} />
+                        <col style={{ width: "28%" }} />
+                        <col style={{ width: "10%" }} />
+                        <col style={{ width: "8%" }} />
+                        <col style={{ width: "7%" }} />
+                        <col style={{ width: "5%" }} />
+                        <col style={{ width: "5%" }} />
+                        <col style={{ width: "4%" }} />
+                        <col style={{ width: "4%" }} />
+                        <col style={{ width: "4%" }} />
+                        <col style={{ width: "4%" }} />
                       </colgroup>
-                      <thead className={`${categoryStyles[category].header} text-white uppercase tracking-wider`}>
+                      <thead
+                        className={`${categoryStyles[category].header} text-white uppercase tracking-wider`}
+                      >
                         <tr>
                           <th className={tableCellStyles.header}>MapNo</th>
                           <th className={tableCellStyles.header}>Banner</th>
-                          <th className={tableCellStyles.header}>Artist - Title [Diff]</th>
+                          <th className={tableCellStyles.header}>
+                            Artist - Title [Diff]
+                          </th>
                           <th className={tableCellStyles.header}>Mapper</th>
                           <th className={tableCellStyles.header}>ID</th>
                           <th className={tableCellStyles.header}>Length</th>
@@ -277,28 +297,32 @@ export default function MappoolTable() {
                       </thead>
                       <tbody className="overflow-visible">
                         {mapsInCategory.map((map, idx) => {
-                          const globalIdx = maps.findIndex(m => m.mapNo === map.mapNo);
+                          const globalIdx = maps.findIndex(
+                            (m) => m.mapNo === map.mapNo
+                          );
                           const beatmap = beatmaps[globalIdx];
                           const isVisible = visible[globalIdx];
                           if (!isVisible) return null;
                           const style = categoryStyles[category] || {
-                            bg: 'bg-[#1a1a22]',
-                            text: 'text-[#f0f0f0]',
-                            header: 'bg-[#222228]',
-                            titleBg: 'bg-[#15151d]'
+                            bg: "bg-[#1a1a22]",
+                            text: "text-[#f0f0f0]",
+                            header: "bg-[#222228]",
+                            titleBg: "bg-[#15151d]",
                           };
                           return (
                             <tr
                               key={map.mapNo}
                               className={`${style.bg} ${style.text} hover:bg-[#181928] hover:scale-102 shadow-md rounded-xl relative overflow-hidden transition-transform duration-200 cursor-pointer`}
                               style={{
-                                animation: 'fadeIn 0.3s ease-in-out forwards',
+                                animation: "fadeIn 0.3s ease-in-out forwards",
                                 animationDelay: `${idx * 80}ms`,
                                 opacity: 0,
-                                height: '30px'
+                                height: "30px",
                               }}
                             >
-                              <td className={tableCellStyles.mapNo}>{map.mapNo}</td>
+                              <td className={tableCellStyles.mapNo}>
+                                {map.mapNo}
+                              </td>
                               <td className={tableCellStyles.default}>
                                 <div className="relative w-16 h-8 hover:scale-110 transition-transform duration-200">
                                   <Image
@@ -306,7 +330,7 @@ export default function MappoolTable() {
                                     alt={`${beatmap?.artist} - ${beatmap?.title}`}
                                     fill
                                     className="object-cover rounded shadow"
-                                    style={{ filter: 'brightness(1.1)' }}
+                                    style={{ filter: "brightness(1.1)" }}
                                   />
                                 </div>
                               </td>
@@ -317,20 +341,45 @@ export default function MappoolTable() {
                                   rel="noopener noreferrer"
                                   className={tableCellStyles.link}
                                 >
-                                  {beatmap?.artist} - {beatmap?.title} <span className="text-gray-400">[{beatmap?.version}]</span>
+                                  {beatmap?.artist} - {beatmap?.title}{" "}
+                                  <span className="text-gray-400">
+                                    [{beatmap?.version}]
+                                  </span>
                                 </a>
                               </td>
-                              <td className={tableCellStyles.mapper}>{beatmap?.creator}</td>
-                              <td className={tableCellStyles.id}>{beatmap?.id}</td>
-                              <td className={tableCellStyles.length}>
-                                {beatmap ? `${Math.floor(beatmap.total_length / 60)}:${String(beatmap.total_length % 60).padStart(2, '0')}` : ''}
+                              <td className={tableCellStyles.mapper}>
+                                {beatmap?.creator}
                               </td>
-                              <td className={tableCellStyles.stats}>{beatmap?.difficulty_rating?.toFixed(2)}</td>
-                              <td className={tableCellStyles.stats}>{beatmap ? Math.round(beatmap.bpm) : ''}</td>
-                              <td className={tableCellStyles.stats}>{beatmap?.cs?.toFixed(1)}</td>
-                              <td className={tableCellStyles.stats}>{beatmap?.ar?.toFixed(1)}</td>
-                              <td className={tableCellStyles.stats}>{beatmap?.accuracy?.toFixed(1)}</td>
-                              <td className={tableCellStyles.stats}>{beatmap?.drain?.toFixed(1)}</td>
+                              <td className={tableCellStyles.id}>
+                                {beatmap?.id}
+                              </td>
+                              <td className={tableCellStyles.length}>
+                                {beatmap
+                                  ? `${Math.floor(
+                                      beatmap.total_length / 60
+                                    )}:${String(
+                                      beatmap.total_length % 60
+                                    ).padStart(2, "0")}`
+                                  : ""}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap?.difficulty_rating?.toFixed(2)}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap ? Math.round(beatmap.bpm) : ""}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap?.cs?.toFixed(1)}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap?.ar?.toFixed(1)}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap?.accuracy?.toFixed(1)}
+                              </td>
+                              <td className={tableCellStyles.stats}>
+                                {beatmap?.drain?.toFixed(1)}
+                              </td>
                             </tr>
                           );
                         })}
@@ -345,8 +394,14 @@ export default function MappoolTable() {
       </div>
       <style jsx global>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
         @keyframes fade-in-down {
           0% {
